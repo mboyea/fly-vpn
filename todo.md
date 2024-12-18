@@ -16,6 +16,7 @@ default_: report
 
 ## Milestones
 
+- [ ] (E) Announce release for +1.0.0 @docs
 - [ ] (D) Verify LAN gaming works for Castle Crusaders @test
 - [ ] (D) Verify LAN gaming works for Age of Empires @test
 - [ ] (C) Verify LAN gaming works for Diablo II @test
