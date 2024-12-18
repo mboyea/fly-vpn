@@ -10,7 +10,7 @@ default_: report
 
 This is a scale-to-zero VPN server that Windows' built-in VPN client can connect to by IP address + username + password.
 
-Quesions? [Read the FAQ](#faq).
+Questions? [Read the FAQ](#faq).
 
 ### Get Started
 
