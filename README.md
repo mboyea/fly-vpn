@@ -34,11 +34,12 @@ See [#### Install Software](#install-software).
 
 | Command | Description |
 |:--- |:--- |
-| `nix run` | Alias for `nix run .#help` |
+| `nix run` | Alias for `.#help` |
 | `nix run .#help` | Print this helpful information |
-| `nix run .#start` | Alias for `nix run .#start native` |
+| `nix run .#start` | Alias for `.#start native` |
 | `nix run .#start native` | Start the server natively on your machine |
 | `nix run .#start container` | Start the server in a container on your machine |
+| `nix develop` | Start a dev shell with all project dependencies installed |
 
 ## FAQ
 
