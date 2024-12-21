@@ -1,3 +1,5 @@
+# see https://github.com/NixOS/nixpkgs/blob/master/pkgs/by-name/so/softether/package.nix
+
 {
   pkgs,
   name,
