@@ -67,7 +67,7 @@ When multiple devices connect to the VPN at the same time, they can connect with
 The SSTP protocol uses TLS instead of UDP, meaning that all traffic is encrypted by default.
 Another benefit of TLS is that the server can use a "shared" IP address, whereas UDP would require a "static" IP address.
 Fly.io would charge extra for you to reserve a static IPv4 address, and many ISP networks don't support IPv6 in 2025.
-So the VPN server must use SSTP over TLS.
+So it is cheapest to host a VPN server that uses SSTP+TLS.
 
 Fly.io provides a great hosting service that allows you to run Docker images on a distributed computing network as if they were a VPS.
 The platform enables you to create extremely cost-effective low-latency servers.
@@ -76,7 +76,7 @@ If you are interested in how they achieve this, [check out the Fly.io docs](http
 If you have any questions, please first do your best to read the code and understand it, starting at the entrypoint of the program in `flake.nix`.
 If you have any errors, first try to identify why the error occurs and fix it yourself.
 Then if you still can't figure it out, or if you think you have something valuable to share, please post a GitHub Issue to this repository.
-Other users may be able to help you out.
+Other users may benefit from community sharing.
 
 ### How to contribute?
 
