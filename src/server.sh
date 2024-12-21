@@ -17,11 +17,12 @@ preStart() {
 }
 
 start() {
-  url="$(vpnserver start | grep -Eo '(https)://[a-zA-Z0-9./?=_%:-]*:5555')"
-  ip_address="${url#https://}"
+  server_url="$(vpnserver start | grep -Eo '(https)://[a-zA-Z0-9./?=_%:-]*:5555')"
+  server_ip="${server_url#https://}"
+  # vpnbridge start
   {
     echo "1"
-    echo "$ip_address"
+    echo "$server_ip"
     cat
   } | vpncmd
 }
