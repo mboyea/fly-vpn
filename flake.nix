@@ -32,6 +32,7 @@
       devShells = {
         default = pkgs.mkShell {
           packages = [
+            pkgs.softether # vpnserver vpnbridge vpnclient vpncmd # TODO: replace this with the proper one using override
             pkgs.psmisc # kill program at PORT using: fuser -k PORT/tcp
             pkgs.nix-prefetch-docker # get sha256 for dockerTools.pullImage using: nix-prefetch-docker --quiet --image-name _ --image-tag _ --image-digest sha256:_
             pkgs.podman

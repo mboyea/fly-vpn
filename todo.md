@@ -30,7 +30,7 @@ default_: report
 - [ ] (A) Draft script `nix run .#start container` @code
 - [ ] (A) Verify VPN works with `nix run .#start native` using Windows VPN client @test
 - [ ] (A) Draft SoftEther server config @code
-- [ ] (A) Draft SoftEther server install @code
+- [x] (A) 2024-12-21 Draft SoftEther server install @code
 - [x] (A) 2024-12-18 Draft script `nix run .#start native` @code
 - [x] (A) 2024-12-18 Draft script `nix run .#help` @code @docs
 - [x] (A) 2024-12-18 Draft Nix code structure for +1.0.0 @code
