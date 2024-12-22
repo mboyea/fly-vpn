@@ -34,7 +34,7 @@ default_: report
 - [ ] (A) Verify VPN works with `nix run .#start native` for web browsing @test
 - [ ] (A) Verify VPN works with `nix run .#start native` for ping command @test
 - [ ] (A) Verify VPN works with `nix run .#start native` using Windows VPN client @test
-- [x] (A) Draft SoftEther server config @code
+- [x] (A) 2024-12-22 Draft SoftEther server config @code
 - [x] (A) 2024-12-21 Draft SoftEther server install @code
 - [x] (A) 2024-12-18 Draft script `nix run .#start native` @code
 - [x] (A) 2024-12-18 Draft script `nix run .#help` @code @docs
