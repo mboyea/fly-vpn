@@ -3,7 +3,7 @@
   name,
   version,
   server,
-  cliArgs ? []
+  cliArgs ? [],
 }: let
   _name = "${name}-start-${version}";
 in pkgs.writeShellApplication {
