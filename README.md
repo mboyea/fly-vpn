@@ -29,14 +29,14 @@ Now you are ready to configure the server!
 
 #### Configure Server
 
-The VPN server must be configured by a secret file named `.env`. Make the `.env` file in the root directory of this repository, and declare the following settings:
+The VPN server must be configured by a secret file named `.env`. Modify the `.env` file in the root directory of this repository, and declare the following settings:
 
 `.env`
 
 ```sh
-DNS_URL="<url_of_deployed_fly_io_server>"
 SOFTETHER_PASS="password"
 USER_PASS_PAIRS="user1:password user2:password user3:password"
+PRODUCTION_CN="<dns_url_of_deployed_fly_io_server>"
 ```
 
 Now you are ready to deploy the server!

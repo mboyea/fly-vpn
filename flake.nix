@@ -11,11 +11,13 @@
   in utils.lib.eachDefaultSystem (
     system: let
       pkgs = import nixpkgs { inherit system; };
+      envVars = import ./env.nix { inherit pkgs; };
       server = pkgs.callPackage ./src/server.nix {
-        inherit name version;
+        inherit name version envVars;
       };
     in rec {
       packages = {
+        inherit envVars;
         help = pkgs.callPackage ./scripts/help.nix {
           inherit name version;
         };

@@ -4,6 +4,8 @@
   pkgs,
   name,
   version,
+  envVars ? {},
+  cliArgs ? [],
 }: let
   dataDir = "/var/lib/softether";
   # TODO: use mkDerivation to generate server.sh dependencies separately
@@ -20,10 +22,8 @@ in pkgs.writeShellApplication {
   runtimeEnv = {
     DATA_DIR = dataDir;
     SOFTETHER_INSTALL_DIR = softether;
-    SOFTETHER_PASS = "password"; # TODO: pull from .env
-    # DNS_URL = ; # TODO: pull from .env
-    USER_PASS_PAIRS = "user1:pass user2:pass user3:pass"; # TODO: pull from .env
-  };
+    ADDITIONAL_CLI_ARGS = pkgs.lib.strings.concatStringsSep " " cliArgs;
+  } // envVars;
   runtimeInputs = [
     softether
   ];

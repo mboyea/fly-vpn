@@ -13,9 +13,6 @@ preStart() {
     if ! test -e "$DATA_DIR/$d/hamcore.se2"; then
       install -m0600 "$SOFTETHER_INSTALL_DIR$DATA_DIR/$d/hamcore.se2" "$DATA_DIR/$d/hamcore.se2"
     fi
-    # if test -e "$SOFTETHER_INSTALL_DIR$DATA_DIR/$d/init.txt"; then
-    #   install -m0600 "$SOFTETHER_INSTALL_DIR$DATA_DIR/$d/init.txt" "$DATA_DIR/$d/init.txt"
-    # fi
     rm -rf "${DATA_DIR:?}/$d/$d"
     ln -s "$SOFTETHER_INSTALL_DIR$DATA_DIR/$d/$d" "$DATA_DIR/$d/$d"
   done
@@ -36,7 +33,7 @@ postStart() {
   {
     echo "SstpEnable yes"
     echo "HubCreate ${HUB_NAME:-flyvpn} /PASSWORD:${HUB_PWD:-}"
-    echo "Hub ${HUB_NAME:-fly-vpn}"
+    echo "Hub ${HUB_NAME:-flyvpn}"
     echo "SecureNatEnable"
   } | vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
   echo "--- CREATING SERVER USERS ---"
@@ -54,8 +51,8 @@ postStart() {
     done
   fi
   echo "--- VERIFYING SERVER CERT ---"
-  # common name (cn) is the DNS url if set, otherwise it's the server IP
-  cn="${DNS_URL-$server_ip}"
+  # common name (cn) is CN_OVERRIDE if set, otherwise it's the server IP
+  cn="${CN_OVERRIDE-$server_ip}"
   if [ -f $DATA_DIR/vpnserver/cn.txt ]; then
     last_cn=$(<$DATA_DIR/vpnserver/cn.txt)
   else
@@ -107,6 +104,8 @@ main() {
     sudo "$0" "$@"
     exit
   fi
+  # set additional CLI args from env variable
+  set -- "$@" "$ADDITIONAL_CLI_ARGS"
   trap onExit EXIT
   preStart
   start
