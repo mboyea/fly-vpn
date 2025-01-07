@@ -11,30 +11,75 @@ preStart() {
     # shellcheck disable=SC2174
     mkdir -m0700 -p "$DATA_DIR/$d"
     if ! test -e "$DATA_DIR/$d/hamcore.se2"; then
-      install -m0600 "$SOFTETHER_DIR$DATA_DIR/$d/hamcore.se2" "$DATA_DIR/$d/hamcore.se2"
+      install -m0600 "$SOFTETHER_INSTALL_DIR$DATA_DIR/$d/hamcore.se2" "$DATA_DIR/$d/hamcore.se2"
     fi
-    if test -e "$SOFTETHER_DIR$DATA_DIR/$d/init.txt"; then
-      install -m0600 "$SOFTETHER_DIR$DATA_DIR/$d/init.txt" "$DATA_DIR/$d/init.txt"
-    fi
+    # if test -e "$SOFTETHER_INSTALL_DIR$DATA_DIR/$d/init.txt"; then
+    #   install -m0600 "$SOFTETHER_INSTALL_DIR$DATA_DIR/$d/init.txt" "$DATA_DIR/$d/init.txt"
+    # fi
     rm -rf "${DATA_DIR:?}/$d/$d"
-    ln -s "$SOFTETHER_DIR$DATA_DIR/$d/$d" "$DATA_DIR/$d/$d"
+    ln -s "$SOFTETHER_INSTALL_DIR$DATA_DIR/$d/$d" "$DATA_DIR/$d/$d"
   done
 }
 
 # start server
 start() {
   server_url="$(vpnserver start | grep -Eo '(https)://[a-zA-Z0-9./?=_%:-]*:5555')"
-  server_ip="${server_url#https://}"
+  server_ip_port="${server_url#https://}"
+  server_ip="${server_ip_port%:5555}"
 }
 
 # init server; start cli
 postStart() {
   echo "--- SETTING SERVER PASSWORD ---"
-  { echo "$SOFTETHER_PWD"; echo "$SOFTETHER_PWD"; echo "$SOFTETHER_PWD"; } | vpncmd "$server_ip" /SERVER "/CMD" "ServerPasswordSet"
+  { echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; } | vpncmd "$server_ip_port" /SERVER /CMD ServerPasswordSet
   echo "--- INITIALIZING SERVER CONFIG ---"
-  vpncmd "$server_ip" /SERVER "/PASSWORD:$SOFTETHER_PWD" "/IN:$DATA_DIR/vpnserver/init.txt"
+  {
+    echo "SstpEnable yes"
+    echo "HubCreate ${HUB_NAME:-flyvpn} /PASSWORD:${HUB_PWD:-}"
+    echo "Hub ${HUB_NAME:-fly-vpn}"
+    echo "SecureNatEnable"
+  } | vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
+  echo "--- CREATING SERVER USERS ---"
+  if [[ -n "$USER_PASS_PAIRS" ]]; then
+    # create each user and set user passwords
+    for user_pass_pair in $USER_PASS_PAIRS; do
+      user="${user_pass_pair%%:*}"
+      pass="${user_pass_pair#*:}"
+      {
+        echo "Hub ${HUB_NAME:-flyvpn}"
+        echo "UserCreate $user /GROUP:none /REALNAME:none /NOTE:none"
+        echo "UserPasswordSet $user"
+        echo "$pass"; echo "$pass"
+      } | vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
+    done
+  fi
+  echo "--- VERIFYING SERVER CERT ---"
+  # common name (cn) is the DNS url if set, otherwise it's the server IP
+  cn="${DNS_URL-$server_ip}"
+  if [ -f $DATA_DIR/vpnserver/cn.txt ]; then
+    last_cn=$(<$DATA_DIR/vpnserver/cn.txt)
+  else
+    last_cn=""
+  fi
+  if [[ "$cn" != "$last_cn" ]]; then
+    echo "!!! NOTICE: SERVER CN CHANGED, UPDATING SERVER CERT !!!"
+    vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD ServerCertRegenerate "$cn"
+    # shellcheck disable=SC2174
+    mkdir -m0700 -p $DATA_DIR/vpnserver
+    echo "$cn" > $DATA_DIR/vpnserver/cn.txt
+    echo "!!! NOTICE: SERVER CERT HAS CHANGED, CLIENTS MUST UPDATE CERTS !!!"
+  else
+    echo "Cert is valid."
+  fi
+  echo "--- GETTING SERVER CERT ---"
+  server_cert=$(echo "/dev/stdout" | vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD ServerCertGet | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p')
+  echo "$server_cert" > "$DATA_DIR/vpnserver/fly-vpn-server.crt"
+  echo "The common name (CN) to connect to the server with is: $cn"
+  echo "The following cert was copied to $DATA_DIR/vpnserver/fly-vpn-server.crt:"
+  echo "$server_cert"
   echo "--- STARTING SERVER CLI ---"
-  vpncmd "$server_ip" /SERVER "/PASSWORD:$SOFTETHER_PWD"
+  # tail -f "$DATA_DIR/vpnserver/server_log/vpn_$(date +%Y%m%d).log" & \
+  vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
 }
 
 # stop server

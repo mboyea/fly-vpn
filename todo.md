@@ -21,7 +21,6 @@ default_: report
 - [ ] (D) Verify LAN gaming works with Fly.io for Age of Empires @test
 - [ ] (C) Verify LAN gaming works with Fly.io for Diablo II @test
 - [ ] (C) Verify LAN gaming works with Fly.io for Minecraft @test
-- [ ] (C) Verify VPN works with Fly.io for Spotify @test
 - [ ] (B) Verify VPN works with Fly.io for web browsing @test
 - [ ] (B) Verify VPN works with Fly.io for ping command @test
 - [ ] (B) Verify VPN works with Fly.io using Windows VPN client @test
@@ -30,10 +29,11 @@ default_: report
 - [ ] (A) Verify VPN works with `nix run .#start container` for ping command @test
 - [ ] (A) Verify VPN works with `nix run .#start container` using Windows VPN client @test
 - [ ] (A) Draft script `nix run .#start container` @code
-- [ ] (A) Draft manual config instructions in `README.md` @docs
-- [ ] (A) Verify VPN works with `nix run .#start native` for web browsing @test
-- [ ] (A) Verify VPN works with `nix run .#start native` for ping command @test
-- [ ] (A) Verify VPN works with `nix run .#start native` using Windows VPN client @test
+- [ ] (A) Draft SoftEther server .env secrets loading @code
+- [x] (A) 2025-01-06 Draft manual config instructions in `README.md` @docs
+- [x] (A) 2025-01-06 Verify VPN works with `nix run .#start native` for web browsing @test
+- [x] (A) 2025-01-06 Verify VPN works with `nix run .#start native` for ping command @test
+- [x] (A) 2025-01-06 Verify VPN works with `nix run .#start native` using Windows VPN client @test
 - [x] (A) 2024-12-22 Draft SoftEther server config @code
 - [x] (A) 2024-12-21 Draft SoftEther server install @code
 - [x] (A) 2024-12-18 Draft script `nix run .#start native` @code

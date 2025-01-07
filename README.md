@@ -14,7 +14,7 @@ Questions? [Read the FAQ](#faq).
 
 ### Get Started
 
-#### Install Software
+#### Install Server
 
 First, copy the repository.
 
@@ -25,12 +25,62 @@ Because Nix manages all packages, it is the only dependency required to be insta
 - [Install Nix](https://nixos.org/download/).
 - [Enable Flakes](https://nixos.wiki/wiki/Flakes).
 
-Now you're ready to use the project!
+Now you are ready to configure the server!
 
-### Scripts
+#### Configure Server
+
+The VPN server must be configured by a secret file named `.env`. Make the `.env` file in the root directory of this repository, and declare the following settings:
+
+`.env`
+
+```sh
+DNS_URL="<url_of_deployed_fly_io_server>"
+SOFTETHER_PASS="password"
+USER_PASS_PAIRS="user1:password user2:password user3:password"
+```
+
+Now you are ready to deploy the server!
+
+#### Deploy to Fly.io
+
+TODO
+
+#### Update a Client Certificate (Windows 10)
+
+- Start the server.
+- Find the location of the `.crt` file provided by the server CLI on startup. It is at `/var/lib/softether/vpnserver/cn.txt` by default.
+- Copy the `.crt` file to the client's Windows 10 computer.
+- Double click the `.crt` file to open it with Crypto Shell Extensions.
+- Click `Install Certificate...`.
+- Select `Local Machine`.
+- Click `Next`.
+- Click `Yes`.
+- Select `Place all certificates in the following store`.
+- Click `Browse...`.
+- Select `Trusted Root Certification Authorities`.
+- Click `OK` to give Administrator Privileges.
+- Click `Next`.
+- Click `Finish`.
+
+#### Connect a Client (Windows 10)
+
+- Open Windows 10 Settings.
+- Click `Network & Internet`.
+- Click `VPN`.
+- Click `Add a VPN connection`.
+  ![Screenshot of an example VPN connection.](docs/screenshots/windows-10-add-a-vpn-connection.png)
+- Select `Windows (built-in)` under "VPN provider".
+- Name the VPN under "Connection name".
+- Put the common name (CN) of the server under "Server name or address". The common name of your server is given by the server on startup alongside the `.crt` file. It will be either an IP address or a DNS URL.
+- Write your `<username>` under "User name".
+- Write your `<password>@flyvpn` under "Password".
+- Click `Save`.
+- Click the VPN connection you just made and select `Connect`.
+
+### Dev Scripts
 
 Scripts can be run from within the project directories using any shell with Nix installed and Flakes enabled.
-See [#### Install Software](#install-software).
+See [#### Install Server](#install-server).
 
 | Command | Description |
 |:--- |:--- |
@@ -41,17 +91,17 @@ See [#### Install Software](#install-software).
 | `nix run .#start container` | Start the server in a container on your machine |
 | `nix develop` | Start a dev shell with all project dependencies installed |
 
-## FAQ
+### FAQ
 
-### What is this for?
+#### What is this for?
 
 You can have all your friends connect to this VPN simultaneously.
-When everyone's connected, LAN multiplayer games should allow you to play together.
+When everyone's connected, LAN multiplayer games should allow you to play together. Now you can have LAN parties online, and nobody has to install or pay for a proprietary VPN client.
 
 Fly doesn't charge you when your app isn't computing anything.
 So when you're not using the VPN, it's not costing you money.
 
-### How does it work?
+#### How does it work?
 
 [Nix (the package manager)](https://nixos.org/) uses [declarative scripting](https://en.wikipedia.org/wiki/Declarative_programming) to:
 
@@ -78,7 +128,7 @@ If you have any errors, first try to identify why the error occurs and fix it yo
 Then if you still can't figure it out, or if you think you have something valuable to share, please post a GitHub Issue to this repository.
 Other users may benefit from community sharing.
 
-### How to contribute?
+#### How to contribute?
 
 This project doesn't support community contributions to the code base right now.
 You are free to post Issues in this repository, and if enough interest is generated, a process for community pull requests will be provided.
