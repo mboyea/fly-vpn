@@ -4,20 +4,11 @@
   pkgs,
   name,
   version,
+  softether ? pkgs.softether,
+  dataDir,
   envVars ? {},
   cliArgs ? [],
-}: let
-  dataDir = "/var/lib/softether";
-  # TODO: use mkDerivation to generate server.sh dependencies separately
-  _softether = pkgs.softether.override { inherit dataDir; };
-  softether = _softether.overrideAttrs (final: prev: {
-    # postInstall = (prev.postInstall or "") + ''
-    #   mkdir -p "$out${dataDir}/vpnserver"
-    #   cat > "$out${dataDir}/vpnserver/init.txt" << EOF
-    #   EOF
-    # '';
-  });
-in pkgs.writeShellApplication {
+}: pkgs.writeShellApplication {
   name = "${name}-server-${version}";
   runtimeEnv = {
     DATA_DIR = dataDir;

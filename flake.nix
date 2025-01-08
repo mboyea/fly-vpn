@@ -7,22 +7,26 @@
   outputs = { self, nixpkgs, flake-utils, ... }: let
     name = "fly-vpn";
     version = "0.0.0";
+    dataDir = "/var/lib/softether";
     utils = flake-utils;
   in utils.lib.eachDefaultSystem (
     system: let
       pkgs = import nixpkgs { inherit system; };
+      softether = pkgs.softether.override { inherit dataDir; };
       envVars = import ./env.nix { inherit pkgs; };
       server = pkgs.callPackage ./src/server.nix {
-        inherit name version envVars;
+        inherit name version softether dataDir envVars;
+      };
+      dockerImage = pkgs.callPackage ./src/docker-image.nix {
+        inherit name version server;
       };
     in rec {
       packages = {
-        inherit envVars;
         help = pkgs.callPackage ./scripts/help.nix {
           inherit name version;
         };
         start = pkgs.callPackage ./scripts/start.nix {
-          inherit name version server;
+          inherit name version server dockerImage;
         };
         default = packages.help;
       };
@@ -34,10 +38,10 @@
       devShells = {
         default = pkgs.mkShell {
           packages = [
-            pkgs.softether # vpnserver vpnbridge vpnclient vpncmd # TODO: replace this with the proper one using override
+            softether # vpnserver vpnbridge vpnclient vpncmd
             pkgs.psmisc # kill program at PORT using: fuser -k PORT/tcp
             pkgs.nix-prefetch-docker # get sha256 for dockerTools.pullImage using: nix-prefetch-docker --quiet --image-name _ --image-tag _ --image-digest sha256:_
-            pkgs.podman
+            pkgs.podman # run docker containers without starting a daemon
             pkgs.gzip
             pkgs.skopeo
             pkgs.flyctl

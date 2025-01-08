@@ -9,6 +9,10 @@ interpret_args() {
         : "${script:="$START_VPN_SERVER"}"
         shift
       ;;
+      container)
+        : "${script:="$START_VPN_SERVER_IN_CONTAINER"}"
+        shift
+      ;;
       *)
         unrecognized_args+=("$1")
         shift

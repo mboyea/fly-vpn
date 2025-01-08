@@ -32,7 +32,7 @@ postStart() {
   echo "--- INITIALIZING SERVER CONFIG ---"
   {
     echo "SstpEnable yes"
-    echo "HubCreate ${HUB_NAME:-flyvpn} /PASSWORD:${HUB_PWD:-}"
+    echo "HubCreate ${HUB_NAME:-flyvpn} /PASSWORD:${HUB_PASS:-}"
     echo "Hub ${HUB_NAME:-flyvpn}"
     echo "SecureNatEnable"
   } | vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
@@ -89,6 +89,7 @@ postStop() {
   for d in vpnserver vpnbridge vpnclient vpncmd; do
     rm -rf "${DATA_DIR:?}/$d/$d"
   done
+  echo "IP ADDRESS: $(ip addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d/ -f1)"
 }
 
 # called when script exits
@@ -96,6 +97,23 @@ onExit() {
   echo
   stop
   postStop
+}
+
+interpret_args() {
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --override-cn)
+        CN_OVERRIDE="$2"
+        shift
+        shift
+      ;;
+      *)
+        unrecognized_args+=("$1")
+        shift
+      ;;
+    esac
+  done
+  set -- "${unrecognized_args[@]}"
 }
 
 # called when script starts
@@ -106,6 +124,7 @@ main() {
   fi
   # set additional CLI args from env variable
   set -- "$@" "$ADDITIONAL_CLI_ARGS"
+  interpret_args "$@"
   trap onExit EXIT
   preStart
   start

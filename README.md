@@ -36,6 +36,8 @@ The VPN server must be configured by a secret file named `.env`. Modify the `.en
 ```sh
 SOFTETHER_PASS="password"
 USER_PASS_PAIRS="user1:password user2:password user3:password"
+HUB_NAME="flyvpn"
+HUB_PASS="password"
 PRODUCTION_CN="<dns_url_of_deployed_fly_io_server>"
 ```
 
