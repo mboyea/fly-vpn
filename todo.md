@@ -25,9 +25,9 @@ default_: report
 - [ ] (B) Verify VPN works with Fly.io for ping command @test
 - [ ] (B) Verify VPN works with Fly.io using Windows VPN client @test
 - [ ] (B) Draft manual deploy instructions in `README.md` @docs @code
-- [ ] (A) Verify VPN works with `nix run .#start container` for web browsing @test
-- [ ] (A) Verify VPN works with `nix run .#start container` for ping command @test
-- [ ] (A) Verify VPN works with `nix run .#start container` using Windows VPN client @test
+- [x] (A) Verify VPN works with `nix run .#start container` for web browsing @test
+- [x] (A) Verify VPN works with `nix run .#start container` for ping command @test
+- [x] (A) Verify VPN works with `nix run .#start container` using Windows VPN client @test
 - [x] (A) 2025-01-07 Draft script `nix run .#start container` @code
 - [x] (A) 2025-01-07 Draft SoftEther server .env secrets loading @code
 - [x] (A) 2025-01-06 Draft manual config instructions in `README.md` @docs
