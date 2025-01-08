@@ -28,7 +28,7 @@ default_: report
 - [ ] (A) Verify VPN works with `nix run .#start container` for web browsing @test
 - [ ] (A) Verify VPN works with `nix run .#start container` for ping command @test
 - [ ] (A) Verify VPN works with `nix run .#start container` using Windows VPN client @test
-- [x] (A) Draft script `nix run .#start container` @code
+- [x] (A) 2025-01-07 Draft script `nix run .#start container` @code
 - [x] (A) 2025-01-07 Draft SoftEther server .env secrets loading @code
 - [x] (A) 2025-01-06 Draft manual config instructions in `README.md` @docs
 - [x] (A) 2025-01-06 Verify VPN works with `nix run .#start native` for web browsing @test

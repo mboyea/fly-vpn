@@ -26,12 +26,7 @@ in {
     name = _name;
     inherit tag;
     fromImage = baseImage;
-      # server.override {
-      #   envVars = envVars // {
-      #     CN_OVERRIDE = envVars.PRODUCTION_CN;
-      #   };
-      # };
-    contents = [ # TODO inject ip address as CN
+    contents = [
       server
     ];
     config = {
