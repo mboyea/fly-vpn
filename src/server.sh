@@ -89,7 +89,6 @@ postStop() {
   for d in vpnserver vpnbridge vpnclient vpncmd; do
     rm -rf "${DATA_DIR:?}/$d/$d"
   done
-  echo "IP ADDRESS: $(ip addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d/ -f1)"
 }
 
 # called when script exits

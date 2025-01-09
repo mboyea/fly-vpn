@@ -20,6 +20,13 @@
       dockerImage = pkgs.callPackage ./src/docker-image.nix {
         inherit name version server;
       };
+      prodDockerImage = dockerImage.override {
+        server = server.override {
+          envVars = envVars // {
+            CN_OVERRIDE = envVars.PRODUCTION_CN;
+          };
+        };
+      };
     in rec {
       packages = {
         help = pkgs.callPackage ./scripts/help.nix {
@@ -28,11 +35,16 @@
         start = pkgs.callPackage ./scripts/start.nix {
           inherit name version server dockerImage;
         };
+        deploy = pkgs.callPackage ./scripts/deploy.nix {
+          inherit name version;
+          dockerImage = prodDockerImage;
+        };
         default = packages.help;
       };
       apps = {
         help = utils.lib.mkApp { drv = packages.help; };
         start = utils.lib.mkApp { drv = packages.start; };
+        deploy = utils.lib.mkApp { drv = packages.deploy; };
         default = apps.help;
       };
       devShells = {

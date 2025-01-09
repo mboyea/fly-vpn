@@ -29,7 +29,10 @@ Now you are ready to configure the server!
 
 #### Configure Server
 
-The VPN server must be configured by a secret file named `.env`. Modify the `.env` file in the root directory of this repository, and declare the following settings:
+First, your fly.io server must have a unique name.
+
+
+The VPN server must then be configured by a secret file named `.env`. Modify the `.env` file in the root directory of this repository, and declare the following settings:
 
 `.env`
 
@@ -38,14 +41,23 @@ SOFTETHER_PASS="password"
 USER_PASS_PAIRS="user1:password user2:password user3:password"
 HUB_NAME="flyvpn"
 HUB_PASS="password"
-PRODUCTION_CN="<dns_url_of_deployed_fly_io_server>"
 ```
 
 Now you are ready to deploy the server!
 
 #### Deploy to Fly.io
 
-TODO
+- [Make a Fly.io account](https://fly.io/dashboard). Link your payment method in the account.
+- Run `nix develop` to open a shell with access to development tools (like `flyctl`).
+- Run `flyctl auth login`
+- Determine your `<unique_app_name>`.
+- Set `app = '<unique_app_name>'` in `fly.toml`.
+- Add line `FLY_APP_NAME="<unique_app_name>"` to `.env`.
+- Run `flyctl launch --no-deploy --ha=false --name <unique_app_name>`
+- Run `flyctl tokens create deploy` to generate your `<fly_api_token>`.
+- Add line `FLY_API_TOKEN="<fly_api_token>"` to `.env`.
+- Add line `PRODUCTION_CN="<unique_app_name>.fly.dev"` to `.env`.
+- Run `nix run .#deploy`
 
 #### Update a Client Certificate (Windows 10)
 
@@ -79,7 +91,7 @@ TODO
 - Click `Save`.
 - Click the VPN connection you just made and select `Connect`.
 
-### Dev Scripts
+#### Scripts
 
 Scripts can be run from within the project directories using any shell with Nix installed and Flakes enabled.
 See [#### Install Server](#install-server).
@@ -139,3 +151,38 @@ We are not currently receiving donations.
 There is no way to fund the project at this time, but if enough interested is generated, a process for donations will be provided.
 
 Feel free to fork, just be sure to [read the license](./LICENSE.md).
+
+### Potential TODO Tasks
+
+1
+
+I should perform a refactor to hide secrets on the production server.
+Right now, those secrets are baked into the Docker image and are exposed in the nix store.
+Rather than baking them into environment variables in the server image, the secrets should be provided by the environment.
+So the `.#start` script should load .env itself, and pass that environment to the running executable.
+
+- For `.#start native`, this is passed directly with Bash.
+- For `.#start container`, this is passed through podman.
+- For `.#deploy`, this is passed through Fly Secrets.
+
+This would enable secrets like USER_PASS_PAIRS to be updated independently of the server image.
+(As it stands, when USER_PASS_PAIRS is updated, all clients must update their certs and that is inconvenient)
+This would also enable me to add `.env` to `.gitignore` again.
+This would also enable me to remove `env.nix`.
+
+2
+
+Add the following.
+
+- echo "  .#deploy | Deploy the server and secrets to Fly.io"
+- echo "  .#deploy server | Deploy the server to Fly.io"
+- echo "  .#deploy secrets | Deploy the secrets to Fly.io"
+
+3
+
+consider generating fly.toml using Nix like https://github.com/LutrisEng/nix-fly-template/blob/main/fly.nix
+this refactor could enable us to pull in FLY_APP_NAME from .env automatically
+
+4
+
+- PRODUCTION_CN should DEFAULT TO $FLY_APP_NAME.fly.dev

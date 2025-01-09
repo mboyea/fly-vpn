@@ -1,0 +1,37 @@
+app = 'flyvpn'
+primary_region = 'den'
+
+[[services]]
+  protocol = 'tcp'
+  internal_port = 5555
+  auto_stop_machines = 'stop'
+  auto_start_machines = false
+  min_machines_running = 0
+
+  [[services.ports]]
+    port = 5555
+
+[[services]]
+  protocol = 'tcp'
+  internal_port = 992
+  auto_stop_machines = 'stop'
+  auto_start_machines = false
+  min_machines_running = 0
+
+  [[services.ports]]
+    port = 992
+
+[[services]]
+  protocol = 'tcp'
+  internal_port = 443
+  auto_stop_machines = 'stop'
+  auto_start_machines = false
+  min_machines_running = 0
+
+  [[services.ports]]
+    port = 443
+
+[[vm]]
+  memory = '1GB'
+  cpu_kind = 'shared'
+  cpus = 2

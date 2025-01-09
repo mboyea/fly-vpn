@@ -31,6 +31,7 @@ in {
     ];
     config = {
       Entrypoint = [ "${pkgs.lib.getExe server}" ];
+      Cmd = [];
       ExposedPorts = {
         "5555/tcp" = {};
         "992/tcp" = {};
