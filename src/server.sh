@@ -5,6 +5,50 @@ isUserRoot() {
   [ "$(id -u)" == "0" ]
 }
 
+# print an error message to the console
+echo_error() {
+  echo "Error in $SCRIPT_NAME:" "$@" 1>&2;
+}
+
+# if the listed env variables aren't found, exit with an error message
+test_env() {
+  # disable exit on undefined variable use
+  set +u
+  # for each env variable
+  while [[ $# -gt 0 ]]; do
+    # check that env variable is defined
+    if [ -z "${!1}" ]; then
+      echo_error The required environment variable "$1" is not defined
+      exit 1
+    fi
+    shift
+  done
+  # enable exit on undefined variable use
+  set -u
+}
+
+# load the env file if it exists
+load_env_file() {
+  # if git is not installed, return
+  if ! [ -x "$(command -v git)" ]; then
+    return
+  fi
+  # if current directory is not a git directory, return
+  if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    return
+  fi
+  # go to top-level of git directory
+  base_dir="$(git rev-parse --show-toplevel)"
+  cd "$base_dir"
+  # load .env file if it exists
+  if [ -r "$ENV_FILE" ]; then
+    set -a
+    # shellcheck disable=SC1091 source=/dev/null
+    source "$ENV_FILE"
+    set +a
+  fi
+}
+
 # install into data dir
 preStart() {
   for d in vpnserver vpnbridge vpnclient vpncmd; do
@@ -51,8 +95,12 @@ postStart() {
     done
   fi
   echo "--- VERIFYING SERVER CERT ---"
-  # common name (cn) is CN_OVERRIDE if set, otherwise it's the server IP
-  cn="${CN_OVERRIDE-$server_ip}"
+  # determine the preferred common name (cn)
+  cn="${cn_override-$server_ip}"
+  if [[ "${is_use_production_cn_arg-}" -eq 1 ]]; then
+    cn="$PRODUCTION_CN"
+  fi
+  # the server cert is valid of the cn matches the stored cn
   if [ -f $DATA_DIR/vpnserver/cn.txt ]; then
     last_cn=$(<$DATA_DIR/vpnserver/cn.txt)
   else
@@ -62,8 +110,8 @@ postStart() {
     echo "!!! NOTICE: SERVER CN CHANGED, UPDATING SERVER CERT !!!"
     vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD ServerCertRegenerate "$cn"
     # shellcheck disable=SC2174
-    mkdir -m0700 -p $DATA_DIR/vpnserver
-    echo "$cn" > $DATA_DIR/vpnserver/cn.txt
+    mkdir -m0700 -p "$DATA_DIR/vpnserver"
+    echo "$cn" > "$DATA_DIR/vpnserver/cn.txt"
     echo "!!! NOTICE: SERVER CERT HAS CHANGED, CLIENTS MUST UPDATE CERTS !!!"
   else
     echo "Cert is valid."
@@ -77,6 +125,10 @@ postStart() {
   echo "--- STARTING SERVER CLI ---"
   # tail -f "$DATA_DIR/vpnserver/server_log/vpn_$(date +%Y%m%d).log" & \
   vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
+  if [[ "${is_keep_alive_arg-}" -eq 1 ]]; then
+    echo "Keeping server online..."
+    sleep infinity
+  fi
 }
 
 # stop server
@@ -98,12 +150,22 @@ onExit() {
   postStop
 }
 
+# interpret arguments passed to this script
 interpret_args() {
   while [[ $# -gt 0 ]]; do
     case $1 in
       --override-cn)
-        CN_OVERRIDE="$2"
+        cn_override="$2"
         shift
+        shift
+      ;;
+      --use-production-cn)
+        is_use_production_cn_arg=1
+        test_env PRODUCTION_CN
+        shift
+      ;;
+      --keep-alive)
+        is_keep_alive_arg=1
         shift
       ;;
       *)
@@ -121,9 +183,13 @@ main() {
     sudo "$0" "$@"
     exit
   fi
-  # set additional CLI args from env variable
-  set -- "$@" "$ADDITIONAL_CLI_ARGS"
+  # shellcheck disable=SC2086
+  set -- "$@" $ADDITIONAL_CLI_ARGS # set additional CLI args passed by Nix
+  test_env SCRIPT_NAME
   interpret_args "$@"
+  test_env ENV_FILE
+  load_env_file
+  test_env DATA_DIR SOFTETHER_INSTALL_DIR SOFTETHER_PASS USER_PASS_PAIRS
   trap onExit EXIT
   preStart
   start

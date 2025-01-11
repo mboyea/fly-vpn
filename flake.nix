@@ -13,18 +13,18 @@
     system: let
       pkgs = import nixpkgs { inherit system; };
       softether = pkgs.softether.override { inherit dataDir; };
-      envVars = import ./env.nix { inherit pkgs; };
       server = pkgs.callPackage ./src/server.nix {
-        inherit name version softether dataDir envVars;
+        inherit name version softether dataDir;
       };
       dockerImage = pkgs.callPackage ./src/docker-image.nix {
         inherit name version server;
       };
       prodDockerImage = dockerImage.override {
         server = server.override {
-          envVars = envVars // {
-            CN_OVERRIDE = envVars.PRODUCTION_CN;
-          };
+          cliArgs = [
+            "--use-production-cn"
+            "--keep-alive"
+          ];
         };
       };
     in rec {

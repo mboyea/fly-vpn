@@ -2,7 +2,7 @@
   pkgs,
   name,
   version,
-  server ? pkgs.callPackage ./server.nix { inherit name version; }
+  server,
 }: let
   _name = "${name}-docker-image";
   tag = version;
@@ -20,15 +20,13 @@
     arch = "amd64";
   };
 in {
-  name = _name;
   inherit version tag;
+  name = _name;
   stream = pkgs.dockerTools.streamLayeredImage {
-    name = _name;
     inherit tag;
+    name = _name;
     fromImage = baseImage;
-    contents = [
-      server
-    ];
+    contents = [ server ];
     config = {
       Entrypoint = [ "${pkgs.lib.getExe server}" ];
       Cmd = [];

@@ -29,10 +29,7 @@ Now you are ready to configure the server!
 
 #### Configure Server
 
-First, your fly.io server must have a unique name.
-
-
-The VPN server must then be configured by a secret file named `.env`. Modify the `.env` file in the root directory of this repository, and declare the following settings:
+The VPN server must be configured by a secret file named `.env`. Modify the `.env` file in the root directory of this repository, and declare the following settings:
 
 `.env`
 
@@ -50,20 +47,21 @@ Now you are ready to deploy the server!
 - [Make a Fly.io account](https://fly.io/dashboard). Link your payment method in the account.
 - Run `nix develop` to open a shell with access to development tools (like `flyctl`).
 - Run `flyctl auth login`
+- Run `touch .env` to make file named `.env`
 - Determine your `<unique_app_name>`.
 - Set `app = '<unique_app_name>'` in `fly.toml`.
 - Add line `FLY_APP_NAME="<unique_app_name>"` to `.env`.
+- Add line `PRODUCTION_CN="<unique_app_name>.fly.dev"` to `.env`.
 - Run `flyctl launch --no-deploy --ha=false --name <unique_app_name>`
 - Run `flyctl tokens create deploy` to generate your `<fly_api_token>`.
 - Add line `FLY_API_TOKEN="<fly_api_token>"` to `.env`.
-- Add line `PRODUCTION_CN="<unique_app_name>.fly.dev"` to `.env`.
 - Run `nix run .#deploy`
 
 #### Update a Client Certificate (Windows 10)
 
 - Start the server.
 - Find the location of the `.crt` file provided by the server CLI on startup. It is at `/var/lib/softether/vpnserver/cn.txt` by default.
-- Copy the `.crt` file to the client's Windows 10 computer.
+- Download the `.crt` file to the client's Windows 10 computer.
 - Double click the `.crt` file to open it with Crypto Shell Extensions.
 - Click `Install Certificate...`.
 - Select `Local Machine`.
@@ -96,21 +94,26 @@ Now you are ready to deploy the server!
 Scripts can be run from within the project directories using any shell with Nix installed and Flakes enabled.
 See [#### Install Server](#install-server).
 
-| Command | Description |
+| Command                     | Description |
 |:--- |:--- |
-| `nix run` | Alias for `.#help` |
-| `nix run .#help` | Print this helpful information |
-| `nix run .#start` | Alias for `.#start native` |
-| `nix run .#start native` | Start the server natively on your machine |
+| `nix run`                   | Alias for `.#help` |
+| `nix run .#help`            | Print this helpful information |
+| `nix run .#start`           | Alias for `.#start native` |
+| `nix run .#start native`    | Start the server natively on your machine |
 | `nix run .#start container` | Start the server in a container on your machine |
-| `nix develop` | Start a dev shell with all project dependencies installed |
+| `nix run .#deploy`          | Alias for `.#deploy all` |
+| `nix run .#deploy server`   | Deploy just the server to Fly.io |
+| `nix run .#deploy secrets`  | Deploy just the secrets to Fly.io |
+| `nix run .#deploy all`      | Deploy the server & secrets to Fly.io |
+| `nix develop`               | Start a dev shell with all project dependencies installed |
 
 ### FAQ
 
 #### What is this for?
 
 You can have all your friends connect to this VPN simultaneously.
-When everyone's connected, LAN multiplayer games should allow you to play together. Now you can have LAN parties online, and nobody has to install or pay for a proprietary VPN client.
+When everyone's connected, LAN multiplayer games should allow you to play together.
+Now you can have LAN parties online, and nobody has to install or pay for a proprietary VPN client.
 
 Fly doesn't charge you when your app isn't computing anything.
 So when you're not using the VPN, it's not costing you money.

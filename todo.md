@@ -24,7 +24,8 @@ default_: report
 - [ ] (B) Verify VPN works with Fly.io for web browsing @test
 - [ ] (B) Verify VPN works with Fly.io for ping command @test
 - [ ] (B) Verify VPN works with Fly.io using Windows VPN client @test
-- [ ] (B) Fix deployment to Fly.io https://community.fly.io/t/docker-image-works-locally-but-not-on-fly-io-getting-command-not-found/23387 @docs @code
+- [ ] (A) 2025-01-11 Draft secrets deployment to Fly.io @code
+- [x] (A) 2025-01-11 Fix deployment to Fly.io https://community.fly.io/t/docker-image-works-locally-but-not-on-fly-io-getting-command-not-found/23387 @code
 - [x] (B) 2025-01-08 Draft manual deploy instructions in `README.md` @docs @code
 - [x] (A) 2025-01-07 Verify VPN works with `nix run .#start container` for web browsing @test
 - [x] (A) 2025-01-07 Verify VPN works with `nix run .#start container` for ping command @test

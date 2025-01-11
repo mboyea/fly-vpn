@@ -2,19 +2,6 @@ echo_error() {
   echo "Error in $SCRIPT_NAME:" "$@" 1>&2;
 }
 
-load_env() {
-  # go to top-level directory
-  base_dir="$(git rev-parse --show-toplevel)"
-  cd "$base_dir"
-  # load .env file
-  if [ -r .env ]; then
-    set -a
-    # shellcheck disable=SC1091
-    source .env
-    set +a
-  fi
-}
-
 test_env() {
   # disable exit on undefined variable use
   set +u
@@ -29,6 +16,53 @@ test_env() {
   done
   # enable exit on undefined variable use
   set -u
+}
+
+go_to_top_level_directory() {
+  # if git is not installed, return
+  if ! [ -x "$(command -v git)" ]; then
+    return
+  fi
+  # if current directory is not a git directory, return
+  if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    return
+  fi
+  # go to top-level of git directory
+  base_dir="$(git rev-parse --show-toplevel)"
+  cd "$base_dir"
+}
+
+load_env_file() {
+  go_to_top_level_directory
+  # if file isn't readable, return
+  if [ ! -r "$ENV_FILE" ]; then
+    return
+  fi
+  # load .env file
+  set -a
+  # shellcheck disable=SC1091 source=/dev/null
+  source "$ENV_FILE"
+  set +a
+}
+
+stage_env_file_to_fly_secrets() {
+  go_to_top_level_directory
+  # if file isn't readable, return
+  if [ ! -r "$ENV_FILE" ]; then
+    return
+  fi
+  # gather env secrets for flyctl
+  flyctl_env_vars=()
+  while IFS= read -r input_line || [[ -n "$input_line" ]]; do
+    # ignore comments
+    if [[ "$input_line" == '#'* ]]; then
+      continue
+    fi
+    # remove quotes (until https://github.com/superfly/flyctl/issues/589 is resolved)
+    flyctl_env_vars+=("$(echo "$input_line" | tr -d '"')")
+  done < "$ENV_FILE"
+  # set flyctl env secrets
+  flyctl secrets set --stage "${flyctl_env_vars[@]}"
 }
 
 deploy_docker_image_to_fly_registry() {
@@ -46,6 +80,18 @@ load_docker_image_on_fly_server() {
 interpret_cli_args() {
   while [[ $# -gt 0 ]]; do
     case $1 in
+      server)
+        # TODO: deploy only server
+        shift
+      ;;
+      secrets)
+        # TODO: deploy only secrets
+        shift
+      ;;
+      all)
+        # TODO: deploy server and secrets
+        shift
+      ;;
       *)
         unrecognized_args+=("$1")
         shift
@@ -57,9 +103,12 @@ interpret_cli_args() {
 
 main() {
   set -- "$@" "$ADDITIONAL_CLI_ARGS" # set additional CLI args passed by Nix
-  load_env
-  test_env SCRIPT_NAME DOCKER_IMAGE_STREAM DOCKER_IMAGE_NAME DOCKER_IMAGE_TAG FLY_API_TOKEN FLY_APP_NAME FLY_CONFIG 
+  test_env SCRIPT_NAME
+  test_env ENV_FILE
+  load_env_file
+  test_env DOCKER_IMAGE_STREAM DOCKER_IMAGE_NAME DOCKER_IMAGE_TAG FLY_API_TOKEN FLY_APP_NAME FLY_CONFIG
   interpret_cli_args "$@"
+  stage_env_file_to_fly_secrets
   deploy_docker_image_to_fly_registry
   load_docker_image_on_fly_server
 }
