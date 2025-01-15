@@ -67,6 +67,65 @@ start() {
   server_url="$(vpnserver start | grep -Eo '(https)://[a-zA-Z0-9./?=_%:-]*:5555')"
   server_ip_port="${server_url#https://}"
   server_ip="${server_ip_port%:5555}"
+  internet_network_device="$(ip addr show | grep -o '[0-9]:.*:.*BROADCAST.*MULTICAST.*UP.*LOWER_UP.*' | sed -e 's/[0-9]*: \(.*\):.*/\1/' | sed -e 's/\(.*\)@.*/\1/')"
+  if [[ "${is_use_production_cn_arg-}" -eq 1 ]]; then
+    mkdir -p /etc
+    cat << EOF > /etc/udhcpd.conf
+# see https://udhcp.busybox.net/udhcpd.conf
+
+# The start and end of the IP lease block
+
+start 		192.168.0.20	 #default: 192.168.0.20
+end		    192.168.0.254	 #default: 192.168.0.254
+
+# The interface that udhcpd will use
+
+interface	$internet_network_device		#default: eth0
+
+# If remaining is true (default) udhcpd will store the time
+# remaining for each lease in the udhcpd leases file. This is
+# for embedded systems that cannot keep time between reboots.
+
+remaining yes
+
+# location of DHCP files
+
+lease_file /var/lib/misc/udhcpd.leases
+pidfile    /var/run/udhcpd.pid
+
+# DNS servers that connected devices will use. Use Google DNS.
+
+opt dns 8.8.8.8 8.8.4.4
+
+# IP addresses for the access point
+
+opt router 192.168.0.1
+opt subnet 255.255.255.0
+opt domain local
+
+# 10 days of lease period
+opt lease 864000
+EOF
+    mkdir -p /var/lib/misc
+    touch /var/lib/misc/udhcpd.leases
+    mkdir -p /var/run
+    touch /var/run/udhcpd.pid
+    mkdir -p /etc/network
+    cat << EOF > /etc/network/interfaces
+auto lo
+
+iface lo inet loopback
+iface eth0 inet dhcp
+
+iface wlan0 inet static
+address 192.168.0.1
+netmask 255.255.255.0
+EOF
+    # ! OKAYYY THIS SUCKS
+    # ? WHY even bother doing this shit when there's a premade Docker image provided by Softether? Just restart the project and consume that.
+    udhcpd
+  fi
+  vpnbridge start
 }
 
 # init server; start cli
@@ -77,8 +136,9 @@ postStart() {
   {
     echo "SstpEnable yes"
     echo "HubCreate ${HUB_NAME:-flyvpn} /PASSWORD:${HUB_PASS:-}"
-    echo "Hub ${HUB_NAME:-flyvpn}"
-    echo "SecureNatEnable"
+    echo "BridgeCreate ${HUB_NAME:-flyvpn} /DEVICE:$internet_network_device"
+    #! echo "Hub ${HUB_NAME:-flyvpn}"
+    #! echo "SecureNatEnable"
   } | vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
   echo "--- CREATING SERVER USERS ---"
   if [[ -n "$USER_PASS_PAIRS" ]]; then
@@ -133,6 +193,7 @@ postStart() {
 
 # stop server
 stop() {
+  vpnbridge stop
   vpnserver stop
 }
 
