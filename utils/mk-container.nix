@@ -71,7 +71,9 @@
         exit
       fi
     fi
+    echo "> ${image.stream} | podman image load"
     ${image.stream} | podman image load
+    echo "> podman container run --tty --interactive ${pkgs.lib.strings.concatStringsSep " " podmanArgs} localhost/${image.name}:${image.tag} ${pkgs.lib.strings.concatStringsSep " " imageArgs}"
     podman container run --tty --interactive ${pkgs.lib.strings.concatStringsSep " " podmanArgs} localhost/${image.name}:${image.tag} ${pkgs.lib.strings.concatStringsSep " " imageArgs}
   '';
 }

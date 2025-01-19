@@ -4,18 +4,20 @@
   version,
   server,
 }: let
+  # podman pull docker.io/siomiz/softethervpn 
+  # podman container run --tty --interactive --privileged siomiz/softethervpn
   _name = "${name}-docker-image";
   tag = version;
   # update base image using variables from:
-  #   xdg-open https://hub.docker.com/_/busybox/tags
+  #   xdg-open https://hub.docker.com/r/siomiz/softethervpn/tags
   #   nix-shell -p nix-prefetch-docker
-  #   nix-prefetch-docker --quiet --image-name busybox --image-tag stable --image-digest sha256:_
+  #   nix-prefetch-docker --image-name siomiz/softethervpn --image-tag latest --image-digest sha256:_
   baseImage = pkgs.dockerTools.pullImage {
-    imageName = "busybox";
-    imageDigest = "sha256:7c3c3cea5d4d6133d6a694d23382f6a7b32652f23855abdba3eb039ca5995447";
-    sha256 = "0k9ypllg4lmwd1a370z8n3awf5fpvlwwq355hmrfjwlmvqarjmjr";
-    finalImageName = "busybox";
-    finalImageTag = "stable";
+    imageName = "siomiz/softethervpn";
+    imageDigest = "sha256:d5697e4c3862b32a3ff517035eb329dce60305c7b1f17a191c4c6e15d0f4febd";
+    sha256 = "1xpnjv4khd4d4ckn83idlqj2hyyrhqszgb0qhhcd26rw2m552d6d";
+    finalImageName = "siomiz/softethervpn";
+    finalImageTag = "latest";
     os = "linux";
     arch = "amd64";
   };
@@ -26,15 +28,16 @@ in {
     inherit tag;
     name = _name;
     fromImage = baseImage;
-    contents = [ server ];
+    # contents = [ server ];
     config = {
-      Entrypoint = [ "${pkgs.lib.getExe server}" ];
-      Cmd = [];
-      ExposedPorts = {
-        "5555/tcp" = {};
-        "992/tcp" = {};
-        "443/tcp" = {};
-      };
+      Entrypoint = [ "/entrypoint.sh" ]; # https://github.com/siomiz/SoftEtherVPN/blob/master/copyables/entrypoint.sh
+      Cmd = [ "/usr/bin/vpnserver" "execsvc" ]; # https://github.com/siomiz/SoftEtherVPN/blob/master/Dockerfile
+      # Cmd = [ "/usr/local/bin/vpnserver" "execsvc" ];
+      # ExposedPorts = {
+      #   "5555/tcp" = {};
+      #   "992/tcp" = {};
+      #   "443/tcp" = {};
+      # };
     };
   };
 }

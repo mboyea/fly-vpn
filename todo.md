@@ -23,7 +23,8 @@ default_: report
 - [ ] (C) Verify LAN gaming works with Fly.io for Minecraft @test
 - [ ] (B) Verify VPN works with Fly.io for web browsing @test
 - [ ] (B) Verify VPN works with Fly.io for ping command @test
-- [ ] (A) Refactor project to consume https://github.com/siomiz/SoftEtherVPN/ @code
+- [ ] (A) Refactor server to inject server config code into https://github.com/siomiz/SoftEtherVPN/ @code
+- [x] (A) Get https://github.com/siomiz/SoftEtherVPN/ working locally @code
 - [ ] ~~ (A) Fix VPN internet connection @code @test ~~
 - [x] (B) 2025-01-11 Verify VPN works with Fly.io using Windows VPN client @test
 - [x] (A) 2025-01-11 Draft secrets deployment to Fly.io @code
