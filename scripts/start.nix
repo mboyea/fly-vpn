@@ -38,7 +38,7 @@
       host_ip=$(ip addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d/ -f1 | head -1)
     '';
     postStop = ''
-      rm -rf "/tmp/${_name}"
+      rm -rf "/tmp/${_name}/${envFile}"
       echo "$host_ip" # ! remove this
     '';
   };
