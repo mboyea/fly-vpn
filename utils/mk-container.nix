@@ -52,10 +52,11 @@
   # ? https://forums.docker.com/t/solution-required-for-nginx-emerg-bind-to-0-0-0-0-443-failed-13-permission-denied/138875/2
   # ! Linux does not allow an unprivileged user to bind software to a port below 1024.
   # ! It is not a restriction introduced by docker or containers in general.
-  # ! People usually use 8080/8443 instead and map host port 80 to 8080 and host port 443 to 8443.
+  # ! People usually use 8080 and 8443 instead, mapping host port 80 to 8080 and host port 443 to 8443.
   # ! However, in the case you need to use a low port number for expected behavior, the option to run as root is provided here.
   runAsRootUser ? false,
   preStart ? "",
+  postStop ? "",
 }: pkgs.writeShellApplication {
   name = "${name}-${image.name}-mk-container-${version}";
   runtimeInputs = [
@@ -71,9 +72,14 @@
         exit
       fi
     fi
-    echo "> ${image.stream} | podman image load"
+    onExit() {
+      ${postStop}
+    }
+    trap onExit EXIT
+    echo '> ${image.stream} | podman image load'
     ${image.stream} | podman image load
-    echo "> podman container run --tty --interactive ${pkgs.lib.strings.concatStringsSep " " podmanArgs} localhost/${image.name}:${image.tag} ${pkgs.lib.strings.concatStringsSep " " imageArgs}"
+    # shellcheck disable=SC2016
+    echo '> podman container run --tty --interactive ${pkgs.lib.strings.concatStringsSep " " podmanArgs} localhost/${image.name}:${image.tag} ${pkgs.lib.strings.concatStringsSep " " imageArgs}'
     podman container run --tty --interactive ${pkgs.lib.strings.concatStringsSep " " podmanArgs} localhost/${image.name}:${image.tag} ${pkgs.lib.strings.concatStringsSep " " imageArgs}
   '';
 }
