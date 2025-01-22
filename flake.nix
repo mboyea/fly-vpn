@@ -14,14 +14,6 @@
       dockerImage = pkgs.callPackage ./src/docker-image.nix {
         inherit name version;
       };
-      # prodDockerImage = dockerImage.override {
-      #   server = server.override {
-      #     cliArgs = [
-      #       "--use-production-cn"
-      #       "--keep-alive"
-      #     ];
-      #   };
-      # };
     in rec {
       packages = {
         help = pkgs.callPackage ./scripts/help.nix {
@@ -32,8 +24,6 @@
         };
         deploy = pkgs.callPackage ./scripts/deploy.nix {
           inherit name version dockerImage;
-          # TODO: test and fix deploy
-          # dockerImage = prodDockerImage;
         };
         default = packages.help;
       };
