@@ -8,7 +8,7 @@
     name = __name;
     runtimeEnv = {
       SCRIPT_NAME = __name;
-      PROJECT_NAME = "${name}-image";
+      PROJECT_NAME = "${name}-entrypoint";
     };
     text = builtins.readFile ./help.sh;
   };

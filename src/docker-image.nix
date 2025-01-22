@@ -18,7 +18,7 @@
     os = "linux";
     arch = "amd64";
   };
-  entrypoint = import ./entrypoint.nix { inherit pkgs name version; };
+  entrypoint = import ./entrypoint.nix { inherit pkgs version; name = _name; };
 in {
   inherit version tag;
   name = _name;
