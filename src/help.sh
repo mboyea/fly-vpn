@@ -7,9 +7,7 @@ echo_error() {
 test_env() {
   flags=$-
   # if u flag (exit when an undefined variable is used) was set, disable it
-  if [[ $flags =~ u ]]; then
-    set +u
-  fi
+  if [[ $flags =~ u ]]; then set +u; fi
   # for each env variable
   while [[ $# -gt 0 ]]; do
     # check that env variable is defined
@@ -20,24 +18,23 @@ test_env() {
     shift
   done
   # if u flag was set, re-enable it
-  if [[ $flags =~ u ]]; then
-    set -u
-  fi
+  if [[ $flags =~ u ]]; then set -u; fi
 }
 
 # print information about this CLI
 print_help() {
+  echo "Usage: <run_image> [Cmd]"
   echo "This is the $PROJECT_NAME help dialog."
   echo
-  echo "This entrypoint provides some scripts."
+  echo "This entrypoint provides some scripts, called by overwriting the container command (Cmd)."
   echo "SCRIPTS:"
   echo "  help  | Print this helpful information"
   echo "  init  | Init the server from env variables"
   echo "  run   | Run vpncmd commands"
   echo "  start | Start the server"
-  echo "To call a script, set the container command (Cmd) to the script name."
-  echo "If Cmd is not a recognized script, it will be executed as a bash command."
-  echo "If Cmd is not provided, it will execute the start script by default."
+  echo "If no Cmd was given, entrypoint runs the start script by default."
+  echo "If Cmd corresponds to a script name, entrypoint runs that script."
+  echo "If Cmd is not a recognized script, it is executed as a bash command."
   echo
 }
 
