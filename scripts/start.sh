@@ -1,10 +1,15 @@
+# print an error message to the console
 echo_error() {
   echo "Error in $SCRIPT_NAME:" "$@" 1>&2;
 }
 
+# if the listed env variables aren't found, exit with an error message
 test_env() {
-  # disable exit on undefined variable use
-  set +u
+  flags=$-
+  # if u flag (exit when an undefined variable is used) was set, disable it
+  if [[ $flags =~ u ]]; then
+    set +u
+  fi
   # for each env variable
   while [[ $# -gt 0 ]]; do
     # check that env variable is defined
@@ -14,46 +19,18 @@ test_env() {
     fi
     shift
   done
-  # enable exit on undefined variable use
-  set -u
-}
-
-interpret_args() {
-  while [[ $# -gt 0 ]]; do
-    case $1 in
-      native)
-        : "${script:="$START_SERVER"}"
-        shift
-      ;;
-      container)
-        : "${script:="$START_SERVER_IN_CONTAINER"}"
-        shift
-      ;;
-      *)
-        unrecognized_args+=("$1")
-        shift
-      ;;
-    esac
-  done
-  set -- "${unrecognized_args[@]}"
+  # if u flag was set, re-enable it
+  if [[ $flags =~ u ]]; then
+    set -u
+  fi
 }
 
 main() {
-  set -- "$@" "$ADDITIONAL_CLI_ARGS" # set additional CLI args passed by Nix
-  test_env SCRIPT_NAME START_SERVER START_SERVER_IN_CONTAINER
-  # interpret CLI args
-  interpret_args "$@"
-  # if script was found in CLI args, run it
-  if [[ -n "${script:-}" ]]; then
-    "$script" "${unrecognized_args[@]}"
-  # otherwise if no CLI args defined, run the default script
-  elif [[ ! ${unrecognized_args[*]} ]]; then
-    "$START_SERVER"
-  # otherwise throw error that CLI args are invalid
-  else
-    echo_error "Invalid arguments:" "${unrecognized_args[@]}"
-    exit 1
+  if [[ -n "${ADDITIONAL_CLI_ARGS// /}" ]]; then
+    set -- "$@" "$ADDITIONAL_CLI_ARGS"
   fi
+  test_env SCRIPT_NAME START_SERVER_IN_CONTAINER
+  $START_SERVER_IN_CONTAINER "$@"
 }
 
 main "$@"

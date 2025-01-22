@@ -4,7 +4,6 @@
   pkgs,
   name,
   version,
-  softether,
   dataDir,
   envFile ? ".env",
   cliArgs ? [],
@@ -16,11 +15,7 @@ in pkgs.writeShellApplication {
     SCRIPT_NAME = _name;
     ADDITIONAL_CLI_ARGS = pkgs.lib.strings.concatStringsSep " " cliArgs;
     DATA_DIR = dataDir;
-    SOFTETHER_INSTALL_DIR = softether;
     ENV_FILE = envFile;
   };
-  runtimeInputs = [
-    softether
-  ];
   text = builtins.readFile ./server.sh;
 }

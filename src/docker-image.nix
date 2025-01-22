@@ -2,10 +2,7 @@
   pkgs,
   name,
   version,
-  server,
 }: let
-  # podman pull docker.io/siomiz/softethervpn 
-  # podman container run --tty --interactive --privileged siomiz/softethervpn
   _name = "${name}-docker-image";
   tag = version;
   # update base image using variables from:
@@ -21,23 +18,36 @@
     os = "linux";
     arch = "amd64";
   };
+  entrypoint = import ./entrypoint.nix { inherit pkgs name version; };
 in {
   inherit version tag;
   name = _name;
+  # see https://github.com/moby/docker-image-spec/blob/main/spec.md
   stream = pkgs.dockerTools.streamLayeredImage {
     inherit tag;
     name = _name;
     fromImage = baseImage;
-    # contents = [ server ];
+    contents = [ entrypoint ];
+    enableFakechroot = true;
+    fakeRootCommands = ''
+      ln -sf '${pkgs.lib.getExe entrypoint}' /entrypoint.sh
+    '';
     config = {
-      Entrypoint = [ "/entrypoint.sh" ]; # https://github.com/siomiz/SoftEtherVPN/blob/master/copyables/entrypoint.sh
-      Cmd = [ "/usr/bin/vpnserver" "execsvc" ]; # https://github.com/siomiz/SoftEtherVPN/blob/master/Dockerfile
-      # Cmd = [ "/usr/local/bin/vpnserver" "execsvc" ];
-      # ExposedPorts = {
-      #   "5555/tcp" = {};
-      #   "992/tcp" = {};
-      #   "443/tcp" = {};
-      # };
+      Entrypoint = [ "/entrypoint.sh" ];
+      Cmd = [];
+      ExposedPorts = {
+        "443/tcp" = {};
+        "992/tcp" = {};
+        "5555/tcp" = {};
+        "500/udp" = {};
+        "1194/udp" = {};
+        "1701/udp" = {};
+        "4500/udp" = {};
+      };
+      Volumes = {
+        # TODO: add volumes
+        # "/path/to/data/dir" = {};
+      };
     };
   };
 }

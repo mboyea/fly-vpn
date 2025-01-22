@@ -107,7 +107,7 @@ main() {
   test_env ENV_FILE
   load_env_file
   test_env DOCKER_IMAGE_STREAM DOCKER_IMAGE_NAME DOCKER_IMAGE_TAG FLY_API_TOKEN FLY_APP_NAME FLY_CONFIG
-  interpret_cli_args "$@"
+  # TODO: interpret_cli_args "$@"
   stage_env_file_to_fly_secrets
   deploy_docker_image_to_fly_registry
   load_docker_image_on_fly_server

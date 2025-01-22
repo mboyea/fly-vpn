@@ -1,7 +1,7 @@
 # see https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/networking/softether.nix
 
 # return true if user is root user
-isUserRoot() {
+is_user_root() {
   [ "$(id -u)" == "0" ]
 }
 
@@ -50,7 +50,7 @@ load_env_file() {
 }
 
 # install into data dir
-preStart() {
+pre_start() {
   for d in vpnserver vpnbridge vpnclient vpncmd; do
     # shellcheck disable=SC2174
     mkdir -m0700 -p "$DATA_DIR/$d"
@@ -129,7 +129,7 @@ EOF
 }
 
 # init server; start cli
-postStart() {
+post_start() {
   echo "--- SETTING SERVER PASSWORD ---"
   { echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; } | vpncmd "$server_ip_port" /SERVER /CMD ServerPasswordSet
   echo "--- INITIALIZING SERVER CONFIG ---"
@@ -198,17 +198,17 @@ stop() {
 }
 
 # uninstall from data dir
-postStop() {
+post_stop() {
   for d in vpnserver vpnbridge vpnclient vpncmd; do
     rm -rf "${DATA_DIR:?}/$d/$d"
   done
 }
 
 # called when script exits
-onExit() {
+on_exit() {
   echo
   stop
-  postStop
+  post_stop
 }
 
 # interpret arguments passed to this script
@@ -240,7 +240,7 @@ interpret_args() {
 
 # called when script starts
 main() {
-  if ! isUserRoot; then
+  if ! is_user_root; then
     sudo "$0" "$@"
     exit
   fi
@@ -251,12 +251,12 @@ main() {
   test_env ENV_FILE
   load_env_file
   test_env DATA_DIR SOFTETHER_INSTALL_DIR SOFTETHER_PASS USER_PASS_PAIRS
-  trap onExit EXIT
-  preStart
+  trap on_exit EXIT
+  pre_start
   start
   # delay to ensure server is ready to accept connections
   sleep 0.2
-  postStart
+  post_start
 }
 
 main "$@"
