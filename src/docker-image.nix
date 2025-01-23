@@ -22,7 +22,7 @@
 in {
   inherit version tag;
   name = _name;
-  # see https://github.com/moby/docker-image-spec/blob/main/spec.md
+  # see configuration spec at https://github.com/moby/docker-image-spec/blob/main/spec.md
   stream = pkgs.dockerTools.streamLayeredImage {
     inherit tag;
     name = _name;
