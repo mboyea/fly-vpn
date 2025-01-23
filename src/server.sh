@@ -26,9 +26,8 @@ test_capabilities() {
   flags=$-
   # if e flag (exit when a program throws an error) was set, disable it
   if [[ $flags =~ e ]]; then set +e; fi
-  iptables -L > /dev/null
-  # shellcheck disable=SC2181
-  if [[ $? -ne 0 ]]; then
+  # check that the iptables command works
+  if ! iptables -L > /dev/null; then
     echo_error This script requires CAP_NET_ADMIN and CAP_NET_RAW
     exit 1
   fi
