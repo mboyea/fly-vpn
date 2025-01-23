@@ -23,10 +23,10 @@ test_env() {
 
 # entrypoint of this script
 main() {
-  test_env SCRIPT_NAME HELP_SCRIPT INIT_SCRIPT START_SCRIPT RUN_SCRIPT
+  test_env SCRIPT_NAME HELP_SCRIPT INIT_SCRIPT SERVER_SCRIPT
   # if no Cmd was given, run the default script
   if [[ $# -eq 0 ]]; then
-    exec "$START_SCRIPT"
+    exec "$SERVER_SCRIPT"
   fi
   # otherwise run the script specified by the first Cmd argument
   case $1 in
@@ -38,13 +38,9 @@ main() {
       shift
       exec "$INIT_SCRIPT" "$@"
     ;;
-    run)
+    server)
       shift
-      exec "$RUN_SCRIPT" "$@"
-    ;;
-    start)
-      shift
-      exec "$START_SCRIPT" "$@"
+      exec "$SERVER_SCRIPT" "$@"
     ;;
     *)
       exec "$@"

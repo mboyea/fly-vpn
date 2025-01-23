@@ -19,20 +19,13 @@
     };
     text = builtins.readFile ./init.sh;
   };
-  run = let __name = "${_name}-run"; in pkgs.writeShellApplication {
-    name = __name;
-    runtimeEnv = {
-      SCRIPT_NAME = __name;
-    };
-    text = builtins.readFile ./run.sh;
-  };
-  start = let __name = "${_name}-start"; in pkgs.writeShellApplication {
+  server = let __name = "${_name}-server"; in pkgs.writeShellApplication {
     name = __name;
     runtimeEnv = {
       SCRIPT_NAME = __name;
       INIT_SCRIPT = pkgs.lib.getExe init;
     };
-    text = builtins.readFile ./start.sh;
+    text = builtins.readFile ./server.sh;
   };
 in pkgs.writeShellApplication {
   name = _name;
@@ -40,8 +33,7 @@ in pkgs.writeShellApplication {
     SCRIPT_NAME = _name;
     HELP_SCRIPT = pkgs.lib.getExe help;
     INIT_SCRIPT = pkgs.lib.getExe init;
-    RUN_SCRIPT = pkgs.lib.getExe run;
-    START_SCRIPT = pkgs.lib.getExe start;
+    SERVER_SCRIPT = pkgs.lib.getExe server;
   };
   text = builtins.readFile ./entrypoint.sh;
 }
