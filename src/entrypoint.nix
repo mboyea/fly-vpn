@@ -30,6 +30,7 @@
     name = __name;
     runtimeEnv = {
       SCRIPT_NAME = __name;
+      INIT_SCRIPT = pkgs.lib.getExe init;
     };
     text = builtins.readFile ./start.sh;
   };

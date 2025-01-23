@@ -12,9 +12,13 @@
     image = dockerImage;
     runAsRootUser = true;
     podmanArgs = [
-      "--privileged"
-      # TODO figure out specific privileges required
-      # "--cap-add" "NET_ADMIN" # ! this doesn't work
+      "--cap-add" "NET_ADMIN" # iptables: can't initialize iptables table `filter': Permission denied
+      "--cap-add" "NET_RAW" # iptables: can't initialize iptables table `filter': Permission denied
+      "--cap-add" "SYSLOG" # dmesg: klogctl: Operation not permitted
+      # ? The following capabilities might be needed
+      # "--cap-add" "NET_BIND_SERVICE"
+      # "--cap-add" "NET_BROADCAST"
+      # "--cap-add" "BPF"
       "--publish" "443:443/tcp"
       "--publish" "992:992/tcp"
       "--publish" "5555:5555/tcp"
