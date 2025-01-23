@@ -46,9 +46,11 @@ init_server() {
   "$INIT_SCRIPT"
 }
 
-# start the vpn
+# start the vpn and print logs
 start_server() {
-  vpnserver execsvc
+  mkdir -p "$(realpath /opt)/server_log"
+  touch "/opt/server_log/vpn_$(date +%Y%m%d).log"
+  vpnserver execsvc & tail -f "/opt/server_log/vpn_$(date +%Y%m%d).log"
 }
 
 # entrypoint of this script
