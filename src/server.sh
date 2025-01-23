@@ -39,17 +39,36 @@ test_capabilities() {
 init_server() {
   # if the server config exists and has text, skip init
   if [ -s "/opt/vpn_server.config" ]; then
+    echo "Server is already configured; Skipping init script..."
     return
   fi
+  echo "Server is not yet configured; Running init script..."
   # call init script
   "$INIT_SCRIPT"
 }
 
-# start the vpn and print logs
+# start the server and print logs
 start_server() {
+  echo "Starting server; Printing server logs..."
   mkdir -p "$(realpath /opt)/server_log"
   touch "/opt/server_log/vpn_$(date +%Y%m%d).log"
-  vpnserver execsvc & tail -f "/opt/server_log/vpn_$(date +%Y%m%d).log"
+  vpnserver execsvc & tail -n 0 -f "/opt/server_log/vpn_$(date +%Y%m%d).log"
+}
+
+# stop the server
+stop_server() {
+  echo "Stopping server..."
+  vpnserver stop > /dev/null
+  flags=$-
+  # if e flag (exit when a program throws an error) was set, disable it
+  if [[ $flags =~ e ]]; then set +e; fi
+  # while pidof vpnserver works, sleep for 100ms
+  while [[ $(pidof vpnserver) ]] > /dev/null; do
+    sleep 0.1
+  done
+  # if e flag was set, re-enable it
+  if [[ $flags =~ e ]]; then set -e; fi
+  echo "Server stopped."
 }
 
 # entrypoint of this script
@@ -57,6 +76,7 @@ main() {
   test_env SCRIPT_NAME INIT_SCRIPT
   test_capabilities
   init_server
+  trap stop_server EXIT
   start_server
 }
 

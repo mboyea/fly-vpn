@@ -21,21 +21,55 @@ test_env() {
   if [[ $flags =~ u ]]; then set -u; fi
 }
 
+# start the server and wait for it to come online
+start_server() {
+  echo "Starting server..."
+  vpnserver start > /dev/null
+  flags=$-
+  # if e flag (exit when a program throws an error) was set, disable it
+  if [[ $flags =~ e ]]; then set +e; fi
+  # until vpncmd works, sleep for 100ms
+  until [[ $(vpncmd localhost /SERVER /CMD ServerInfoGet) ]] > /dev/null; do
+    sleep 0.1
+  done
+  # if e flag was set, re-enable it
+  if [[ $flags =~ e ]]; then set -e; fi
+  echo "Server started."
+}
+
+# stop the server and wait for it to shutdown
+stop_server() {
+  echo "Stopping server..."
+  vpnserver stop > /dev/null
+  flags=$-
+  # if e flag (exit when a program throws an error) was set, disable it
+  if [[ $flags =~ e ]]; then set +e; fi
+  # while pidof vpnserver works, sleep for 100ms
+  while [[ $(pidof vpnserver) ]] > /dev/null; do
+    sleep 0.1
+  done
+  # if e flag was set, re-enable it
+  if [[ $flags =~ e ]]; then set -e; fi
+  echo "Server stopped."
+}
+
+# initialize the server config
+init_server() {
+  echo "Initializing server..."
+  # TODO: IMITATE ALL SIOMIZ/SOFTETHERVPN FUNCTIONS
+  # TODO: IMITATE ALL ARCHIVE/SERVER.SH FUNCTIONS
+  echo "Server initialized."
+}
+
 # entrypoint of this script
 main() {
   test_env SCRIPT_NAME
-  # ? vpnserver start
-  # ? wait_for_server_startup
-  # ? init_server
-  # ? vpnserver stop
-  # ? wait_for_server_shutdown
+  trap stop_server EXIT
+  start_server
+  init_server
 }
 
 main "$@"
-
-# TODO start server
-
-# TODO wait for server to come up (while)
 
 # TODO: ServerCipherSet DHE-RSA-AES256-SHA
 # TODO: version=About | head -3 | tail -1 | sed 's/^/# /;'
@@ -57,10 +91,6 @@ main "$@"
 # TODO load custom vpncmds from env variables
 # TODO set HUB password
 # TODO set SERVER password
-
-# TODO stop server
-
-# TODO wait for server to shut down (while)
 
 # ? echo "--- SETTING SERVER PASSWORD ---"
 # ? { echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; } | vpncmd "$server_ip_port" /SERVER /CMD ServerPasswordSet
