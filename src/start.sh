@@ -29,7 +29,7 @@ test_capabilities() {
   iptables -L > /dev/null
   # shellcheck disable=SC2181
   if [[ $? -ne 0 ]]; then
-    echo_error "This script requires CAP_NET_ADMIN and CAP_NET_RAW"
+    echo_error This script requires CAP_NET_ADMIN and CAP_NET_RAW
     exit 1
   fi
   # if e flag was set, re-enable it
