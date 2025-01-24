@@ -54,100 +54,143 @@ stop_server() {
 }
 
 # initialize the server config
-init_server() {
+configure_settings() {
   echo "Initializing server..."
-  # TODO: IMITATE ALL SIOMIZ/SOFTETHERVPN FUNCTIONS
-  # TODO: IMITATE ALL ARCHIVE/SERVER.SH FUNCTIONS
+  # TODO gracefully handle server password changes
+  # set the server password
+  { echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; } \
+    | vpncmd localhost /SERVER /CMD ServerPasswordSet > /dev/null
+  # set the server configuration
+  {
+    # weak ciphers are enabled by default, see https://forum.vpngate.net/viewtopic.php?t=64385
+    echo "ServerCipherSet DHE-RSA-AE256-SHA"
+    # enable connections via L2TP over IPsec
+    echo "IPsecEnable /L2TP:yes /L2TPRAW:yes /ETHERIP:no /PSK:$IPSEC_PSK /DEFAULTHUB:DEFAULT"
+    # enable connections via SSTP
+    echo "SstpEnable yes"
+    # enable connections via OpenVPN
+    # ! OpenVpnEnable may be broken; see https://github.com/SoftEtherVPN/SoftEtherVPN/discussions/1882
+    # ? echo "OpenVpnEnable yes /PORTS:1194"
+    echo "ProtoOptionsSet OpenVPN /Name:Enabled /Value:True"
+    echo "PortsUDPSet 1194"
+    # enter hub mode
+    echo "Hub DEFAULT"
+    # set hub password
+    echo "SetHubPassword $HUB_PASS"
+    # disable verbose logs
+    echo "LogDisable packet"
+    echo "LogDisable security"
+    # enable SecureNAT (internal NAT and DHCP server)
+    echo "SecureNatEnable"
+    # set NAT settings
+    echo "NatSet /MTU:$NAT_MTU /LOG:no /TCPTIMEOUT:$NAT_TCP_TIMEOUT /UDPTIMEOUT:$NAT_UDP_TIMEOUT"
+    # force user-mode SecureNAT
+    echo "ExtOptionSet DisableIpRawModeSecureNAT /VALUE:true"
+    echo "ExtOptionSet DisableKernelModeSecureNAT /VALUE:true"
+  } | vpncmd localhost /SERVER "/PASSWORD:$SOFTETHER_PASS" > /dev/null
   echo "Server initialized."
+}
+
+# create the server users
+create_users() {
+  echo "Creating users..."
+  # if no user data is given, do nothing
+  if [[ -z "$USER_PASS_PAIRS" ]]; then
+    echo "No users to create."
+    return
+  fi
+  # create each user and set their password
+  for user_pass_pair in $USER_PASS_PAIRS; do
+    user="${user_pass_pair%%:*}"
+    pass="${user_pass_pair#*:}"
+    {
+      echo "Hub DEFAULT"
+      echo "UserCreate $user /GROUP:none /REALNAME:none /NOTE:none"
+      echo "UserPasswordSet $user"
+      echo "$pass"
+      echo "$pass"
+    } | vpncmd localhost /SERVER "/PASSWORD:$SOFTETHER_PASS" > /dev/null
+    echo "User \"$user\" created."
+  done
+  echo "Done creating users."
+}
+
+# generate the server authentication certificate and SSL private key
+generate_cert_and_key() {
+  echo "Validating server certificate..."
+  flags=$-
+  cn="$COMMON_NAME"
+  cn_file="$(realpath /opt)/store/cn.txt"
+  cert_file="$(realpath /opt)/store/server.crt"
+  key_file="$(realpath /opt)/store/server.key"
+  if [[ $flags =~ e ]]; then set +e; fi
+  { last_cn=$(< "$cn_file"); } 2>&-
+  if [[ $flags =~ e ]]; then set -e; fi
+  # if the existing certificate and key are valid, use them
+  if [[ "$cn" == "$last_cn" && -s "$cert_file" && -s "$key_file" ]]; then
+    vpncmd localhost /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD \
+      ServerCertSet "/LOADCERT:$cert_file" "/LOADKEY:$key_file" > /dev/null
+    echo "Server cert is valid."
+    return
+  fi
+  # generate a new server certificate & key
+  echo "Server cert isn't valid."
+  echo "Generating new server cert..."
+  vpncmd localhost /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD \
+    ServerCertRegenerate "$cn" > /dev/null
+  # store the new server certificate
+  cert=$( \
+    echo "/dev/stdout" \
+    | vpncmd localhost /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD ServerCertGet \
+    | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
+  )
+  mkdir -p "$(dirname "$cert_file")"
+  echo "$cert" > "$cert_file"
+  # store the new server key
+  key=$( \
+    echo "/dev/stdout" \
+    | vpncmd localhost /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD ServerKeyGet \
+    | sed -n '/-----BEGIN PRIVATE KEY-----/,/-----END PRIVATE KEY-----/p' \
+  )
+  mkdir -p "$(dirname "$key_file")"
+  echo "$key" > "$key_file"
+  # store the new server common name (cn)
+  mkdir -p "$(dirname "$cn_file")"
+  echo "$cn" > "$cn_file"
+  echo "Server cert has been changed; Clients must download the new cert."
+}
+
+# generate the openvpn configuration file
+generate_openvpn_config() {
+  openvpn_config_zip_file="$(realpath /opt)/store/openvpn.zip"
+  openvpn_config_file="$(realpath /opt)/store/openvpn.ovpn"
+  # generate the openvpn configuration in .zip format
+  echo "Generating new OpenVPN config..."
+  cd "$(dirname "$openvpn_config_zip_file")"
+  vpncmd localhost /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD \
+    OpenVpnMakeConfig "$(basename "$openvpn_config_zip_file")" > /dev/null
+  cd - > /dev/null
+  # convert the openvpn configuration to .ovpn format
+  # shellcheck disable=SC2035
+  unzip -p "$openvpn_config_zip_file" *_l3.ovpn > "$openvpn_config_file"
+  # remove "#" comments, "\r", and empty lines from the openvpn configuration
+  sed -i '/^#/d;s/\r//;/^$/d' "$openvpn_config_file"
+  echo "Created OpenVPN config file."
 }
 
 # entrypoint of this script
 main() {
-  test_env SCRIPT_NAME
+  test_env SCRIPT_NAME SOFTETHER_PASS HUB_PASS IPSEC_PSK COMMON_NAME
+  : "${NAT_MTU:="1500"}"
+  : "${NAT_TCP_TIMEOUT:="3600"}"
+  : "${NAT_UDP_TIMEOUT:="1800"}"
+  : "${USER_PASS_PAIRS:=""}"
   trap stop_server EXIT
   start_server
-  init_server
+  configure_settings
+  create_users
+  generate_cert_and_key
+  generate_openvpn_config
 }
 
 main "$@"
-
-# TODO: ServerCipherSet DHE-RSA-AES256-SHA
-# TODO: version=About | head -3 | tail -1 | sed 's/^/# /;'
-# ! TODO IPsecEnable /L2TP:yes /L2TPRAW:yes /ETHERIP:no /PSK:${PSK} /DEFAULTHUB:DEFAULT
-# TODO: HUB DEFAULT SecureNatEnable
-# TODO: HUB DEFAULT NatSet /MTU:$MTU /LOG:no /TCPTIMEOUT:3600 /UDPTIMEOUT:1800
-# TODO enable openvpn
-# TODO: ProtoOptionsSet OpenVPN /NAME:Enabled /VALUE:True
-# TODO: PortsUDPSet 1194
-# TODO validate server cert and key
-# TODO: OpenVpnMakeConfig openvpn.zip
-# TODO extract and print openvpn.zip
-# TODO: HUB LogDisable packet
-# TODO: HUB LogDisable security
-# TODO force user-mode SecureNAT
-# TODO: HUB ExtOptionSet DisableIpRawModeSecureNAT /VALUE:true
-# TODO: HUB ExtOptionSet DisableKernelModeSecureNAT /VALUE:true
-# TODO load USER_PASS_PAIRS
-# TODO load custom vpncmds from env variables
-# TODO set HUB password
-# TODO set SERVER password
-
-# ? echo "--- SETTING SERVER PASSWORD ---"
-# ? { echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; } | vpncmd "$server_ip_port" /SERVER /CMD ServerPasswordSet
-# ? echo "--- INITIALIZING SERVER CONFIG ---"
-# ? {
-# ?   echo "SstpEnable yes"
-# ?   echo "HubCreate ${HUB_NAME:-flyvpn} /PASSWORD:${HUB_PASS:-}"
-# ?   echo "BridgeCreate ${HUB_NAME:-flyvpn} /DEVICE:$internet_network_device"
-# ?   #! echo "Hub ${HUB_NAME:-flyvpn}"
-# ?   #! echo "SecureNatEnable"
-# ? } | vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
-# ? echo "--- CREATING SERVER USERS ---"
-# ? if [[ -n "$USER_PASS_PAIRS" ]]; then
-# ?   # create each user and set user passwords
-# ?   for user_pass_pair in $USER_PASS_PAIRS; do
-# ?     user="${user_pass_pair%%:*}"
-# ?     pass="${user_pass_pair#*:}"
-# ?     {
-# ?       echo "Hub ${HUB_NAME:-flyvpn}"
-# ?       echo "UserCreate $user /GROUP:none /REALNAME:none /NOTE:none"
-# ?       echo "UserPasswordSet $user"
-# ?       echo "$pass"; echo "$pass"
-# ?     } | vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
-# ?   done
-# ? fi
-# ? echo "--- VERIFYING SERVER CERT ---"
-# ? # determine the preferred common name (cn)
-# ? cn="${cn_override-$server_ip}"
-# ? if [[ "${is_use_production_cn_arg-}" -eq 1 ]]; then
-# ?   cn="$PRODUCTION_CN"
-# ? fi
-# ? # the server cert is valid of the cn matches the stored cn
-# ? if [ -f $DATA_DIR/vpnserver/cn.txt ]; then
-# ?   last_cn=$(<$DATA_DIR/vpnserver/cn.txt)
-# ? else
-# ?   last_cn=""
-# ? fi
-# ? if [[ "$cn" != "$last_cn" ]]; then
-# ?   echo "!!! NOTICE: SERVER CN CHANGED, UPDATING SERVER CERT !!!"
-# ?   vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD ServerCertRegenerate "$cn"
-# ?   # shellcheck disable=SC2174
-# ?   mkdir -m0700 -p "$DATA_DIR/vpnserver"
-# ?   echo "$cn" > "$DATA_DIR/vpnserver/cn.txt"
-# ?   echo "!!! NOTICE: SERVER CERT HAS CHANGED, CLIENTS MUST UPDATE CERTS !!!"
-# ? else
-# ?   echo "Cert is valid."
-# ? fi
-# ? echo "--- GETTING SERVER CERT ---"
-# ? server_cert=$(echo "/dev/stdout" | vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS" /CMD ServerCertGet | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p')
-# ? echo "$server_cert" > "$DATA_DIR/vpnserver/fly-vpn-server.crt"
-# ? echo "The common name (CN) to connect to the server with is: $cn"
-# ? echo "The following cert was copied to $DATA_DIR/vpnserver/fly-vpn-server.crt:"
-# ? echo "$server_cert"
-# ? echo "--- STARTING SERVER CLI ---"
-# ? # tail -f "$DATA_DIR/vpnserver/server_log/vpn_$(date +%Y%m%d).log" & \
-# ? vpncmd "$server_ip_port" /SERVER "/PASSWORD:$SOFTETHER_PASS"
-# ? if [[ "${is_keep_alive_arg-}" -eq 1 ]]; then
-# ?   echo "Keeping server online..."
-# ?   sleep infinity
-# ? fi
