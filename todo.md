@@ -17,11 +17,12 @@ default_: report
 ## Milestones
 
 - [ ] (E) Announce release for +1.0.0 @docs
+- [ ] (B) Document how to play each game in `README.md` @docs
 - [ ] (D) Verify LAN gaming works with Fly.io for Castle Crusaders @test
 - [ ] (D) Verify LAN gaming works with Fly.io for Age of Empires @test
 - [ ] (C) Verify LAN gaming works with Fly.io for Diablo II @test
 - [ ] (C) Verify LAN gaming works with Fly.io for Minecraft @test
-- [ ] (A) Re-write `README.md` and `nix run .#help` to reflect new usage @docs @code
+- [ ] (B) Re-write `README.md` and `nix run .#help` to reflect new usage @docs @code
 - [ ] (A) Draft `nix run .#deploy` scripts `server`, `secrets`, and `all` @code
 - [ ] (A) Verify VPN works with Fly.io using Windows VPN client @test
 - [x] (A) 2025-01-24 Setup volumes to persist the server configuration @code
