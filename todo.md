@@ -27,7 +27,7 @@ default_: report
 - [ ] (A) Fix `nix run .#deploy`for new image @code
 - [ ] (A) Verify VPN works with `nix run .#start` using Windows VPN client @test
 - [ ] (A) Verify VPN works with `nix run .#start` using SoftEther VPN client @test
-- [ ] (A) Refactor server to inject server config code into https://github.com/siomiz/SoftEtherVPN/ @code
+- [x] (A) 2025-01-23 Refactor server to inject server config code into https://github.com/siomiz/SoftEtherVPN/ @code
 - [x] (A) 2025-01-18 Get https://github.com/siomiz/SoftEtherVPN/ working locally @code
 - [ ] ~~ (A) Fix VPN internet connection @code @test ~~
 - [x] (B) 2025-01-11 Verify VPN connects to Fly.io using Windows VPN client @test
