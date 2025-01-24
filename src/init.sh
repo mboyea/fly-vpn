@@ -157,7 +157,7 @@ generate_cert_and_key() {
   # store the new server common name (cn)
   mkdir -p "$(dirname "$cn_file")"
   echo "$cn" > "$cn_file"
-  echo "Server cert has been changed; Clients must download the new cert."
+  echo "Server cert has been changed; Clients must use the new cert."
 }
 
 # generate the openvpn configuration file
@@ -178,6 +178,15 @@ generate_openvpn_config() {
   echo "Created OpenVPN config file."
 }
 
+print_cert_and_key_and_openvpn_config() {
+  echo "Printing certificate from $cert_file:"
+  cat "$cert_file"
+  echo "Printing key from $key_file:"
+  cat "$key_file"
+  echo "Printing OpenVPN config from $openvpn_config_file:"
+  cat "$openvpn_config_file"
+}
+
 # entrypoint of this script
 main() {
   test_env SCRIPT_NAME SOFTETHER_PASS HUB_PASS IPSEC_PSK COMMON_NAME
@@ -191,6 +200,7 @@ main() {
   create_users
   generate_cert_and_key
   generate_openvpn_config
+  print_cert_and_key_and_openvpn_config
 }
 
 main "$@"
