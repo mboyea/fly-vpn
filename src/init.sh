@@ -29,7 +29,9 @@ start_server() {
   # if e flag (exit when a program throws an error) was set, disable it
   if [[ $flags =~ e ]]; then set +e; fi
   # until vpncmd works, sleep for 100ms
-  until [[ $(vpncmd localhost /SERVER /CMD ServerInfoGet) ]] > /dev/null; do
+  until [[ $( \
+    { echo "$SOFTETHER_PASS"; } | vpncmd localhost /SERVER /CMD ServerInfoGet \
+  ) ]] > /dev/null; do
     sleep 0.1
   done
   # if e flag was set, re-enable it
@@ -62,17 +64,17 @@ configure_settings() {
     | vpncmd localhost /SERVER /CMD ServerPasswordSet > /dev/null
   # set the server configuration
   {
-    # weak ciphers are enabled by default, see https://forum.vpngate.net/viewtopic.php?t=64385
-    echo "ServerCipherSet DHE-RSA-AE256-SHA"
-    # enable connections via L2TP over IPsec
-    echo "IPsecEnable /L2TP:yes /L2TPRAW:yes /ETHERIP:no /PSK:$IPSEC_PSK /DEFAULTHUB:DEFAULT"
+    # # weak ciphers are enabled by default, see https://forum.vpngate.net/viewtopic.php?t=64385
+    # echo "ServerCipherSet DHE-RSA-AE256-SHA"
     # enable connections via SSTP
     echo "SstpEnable yes"
+    # # enable connections via L2TP over IPsec
+    # echo "IPsecEnable /L2TP:yes /L2TPRAW:yes /ETHERIP:no /PSK:$IPSEC_PSK /DEFAULTHUB:DEFAULT"
     # enable connections via OpenVPN
-    # ! OpenVpnEnable may be broken; see https://github.com/SoftEtherVPN/SoftEtherVPN/discussions/1882
-    # ? echo "OpenVpnEnable yes /PORTS:1194"
-    echo "ProtoOptionsSet OpenVPN /Name:Enabled /Value:True"
-    echo "PortsUDPSet 1194"
+    # # ! OpenVpnEnable may be broken; see https://github.com/SoftEtherVPN/SoftEtherVPN/discussions/1882
+    # # ? echo "OpenVpnEnable yes /PORTS:1194"
+    # echo "ProtoOptionsSet OpenVPN /Name:Enabled /Value:True"
+    # echo "PortsUDPSet 1194"
     # enter hub mode
     echo "Hub DEFAULT"
     # set hub password
@@ -178,11 +180,16 @@ generate_openvpn_config() {
   echo "Created OpenVPN config file."
 }
 
-print_cert_and_key_and_openvpn_config() {
+# print the server authentication certificate and SSL private key
+print_cert_and_key() {
   echo "Printing certificate from $cert_file:"
   cat "$cert_file"
   echo "Printing key from $key_file:"
   cat "$key_file"
+}
+
+# print the openvpn configuration file
+print_openvpn_config() {
   echo "Printing OpenVPN config from $openvpn_config_file:"
   cat "$openvpn_config_file"
 }
@@ -199,8 +206,9 @@ main() {
   configure_settings
   create_users
   generate_cert_and_key
-  generate_openvpn_config
-  print_cert_and_key_and_openvpn_config
+  # generate_openvpn_config
+  # print_openvpn_config
+  print_cert_and_key
 }
 
 main "$@"

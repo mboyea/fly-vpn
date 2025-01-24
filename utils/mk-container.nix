@@ -63,11 +63,12 @@
   runtimeInputs = [
     pkgs.podman
   ];
-  text = preStart + ''
+  text = ''
     # return true if user is root user
     isUserRoot() {
       [ "$(id -u)" == "0" ]
     }
+
     # if this should run as the root user, make sure user is the root user
     if "${pkgs.lib.trivial.boolToString runAsRootUser}"; then
       if ! isUserRoot; then
@@ -75,20 +76,31 @@
         exit
       fi
     fi
+
+    ${preStart}
+
     # cleanup when this script exits
     on_exit() {
       ${postStop}
       :
     }
     trap on_exit EXIT
+
     echo_exec() {
       ( set -x; "$@" )
     }
+
     echo_exec ${image.stream} | echo_exec podman image load
-    if [ "$#" -eq 0 ]; then
-      echo_exec podman container run --tty --interactive ${pkgs.lib.strings.concatStringsSep " " podmanArgs} localhost/${image.name}:${image.tag} ${pkgs.lib.strings.concatStringsSep " " defaultImageArgs}
-    else
-      echo_exec podman container run --tty --interactive  ${pkgs.lib.strings.concatStringsSep " " podmanArgs} localhost/${image.name}:${image.tag} "$@"
-    fi
+
+    echo_exec podman container run --tty --interactive \
+      ${pkgs.lib.strings.concatStringsSep " " podmanArgs} \
+      localhost/${image.name}:${image.tag} \
+      "$( \
+        if [ "$#" -eq 0 ]; then \
+          echo ${pkgs.lib.strings.concatStringsSep " " defaultImageArgs}; \
+        else \
+          echo "$@"; \
+        fi \
+      )"
   '';
 }

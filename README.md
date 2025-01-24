@@ -51,8 +51,8 @@ Now you are ready to deploy the server!
 - Determine your `<unique_app_name>`.
 - Set `app = '<unique_app_name>'` in `fly.toml`.
 - Add line `FLY_APP_NAME="<unique_app_name>"` to `.env`.
-- Add line `PRODUCTION_CN="<unique_app_name>.fly.dev"` to `.env`.
 - Run `flyctl launch --no-deploy --ha=false --name <unique_app_name>`
+- Run `fly volume create backup -r 'den' -n 1`.
 - Run `flyctl tokens create deploy` to generate your `<fly_api_token>`.
 - Add line `FLY_API_TOKEN="<fly_api_token>"` to `.env`.
 - Run `nix run .#deploy`

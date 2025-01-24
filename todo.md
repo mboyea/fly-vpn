@@ -21,12 +21,13 @@ default_: report
 - [ ] (D) Verify LAN gaming works with Fly.io for Age of Empires @test
 - [ ] (C) Verify LAN gaming works with Fly.io for Diablo II @test
 - [ ] (C) Verify LAN gaming works with Fly.io for Minecraft @test
-- [ ] (A) Verify VPN works with Fly.io using Windows VPN client @test
-- [ ] (A) Verify VPN works with Fly.io using SoftEther VPN client @test
 - [ ] (A) Re-write `README.md` and `nix run .#help` to reflect new usage @docs @code
-- [ ] (A) Fix `nix run .#deploy`for new image @code
-- [x] (A) Verify VPN works with `nix run .#start` using Windows VPN client @test
-- [x] (A) Verify VPN works with `nix run .#start` using SoftEther VPN client @test
+- [ ] (A) Draft `nix run .#deploy` scripts `server`, `secrets`, and `all` @code
+- [ ] (A) Verify VPN works with Fly.io using Windows VPN client @test
+- [x] (A) 2025-01-24 Setup volumes to persist the server configuration @code
+- [x] (A) 2025-01-23 Fix `nix run .#deploy`for new image @code
+- [x] (A) 2025-01-23 Verify VPN works with `nix run .#start` using Windows VPN client @test
+- [x] (A) 2025-01-23 Verify VPN works with `nix run .#start` using SoftEther VPN client @test
 - [x] (A) 2025-01-23 Refactor server to inject server config code into https://github.com/siomiz/SoftEtherVPN/ @code
 - [x] (A) 2025-01-18 Get https://github.com/siomiz/SoftEtherVPN/ working locally @code
 - [ ] ~~ (A) Fix VPN internet connection @code @test ~~

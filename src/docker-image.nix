@@ -39,14 +39,13 @@ in {
         "443/tcp" = {};
         "992/tcp" = {};
         "5555/tcp" = {};
-        "500/udp" = {};
-        "1194/udp" = {};
-        "1701/udp" = {};
-        "4500/udp" = {};
+        # "500/udp" = {};
+        # "1194/udp" = {};
+        # "1701/udp" = {};
+        # "4500/udp" = {};
       };
       Volumes = {
-        # TODO: add volumes
-        # "/path/to/data/dir" = {};
+        "/var/opt/backup" = {};
       };
     };
   };
