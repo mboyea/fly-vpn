@@ -7,9 +7,7 @@ echo_error() {
 test_env() {
   flags=$-
   # if u flag (exit when an undefined variable is used) was set, disable it
-  if [[ $flags =~ u ]]; then
-    set +u
-  fi
+  if [[ $flags =~ u ]]; then set +u; fi
   # for each env variable
   while [[ $# -gt 0 ]]; do
     # check that env variable is defined
@@ -20,17 +18,34 @@ test_env() {
     shift
   done
   # if u flag was set, re-enable it
-  if [[ $flags =~ u ]]; then
-    set -u
-  fi
+  if [[ $flags =~ u ]]; then set -u; fi
 }
 
+# entrypoint of this script
 main() {
-  if [[ -n "${ADDITIONAL_CLI_ARGS// /}" ]]; then
-    set -- "$@" "$ADDITIONAL_CLI_ARGS"
+  test_env SCRIPT_NAME HELP_SCRIPT INIT_SCRIPT SERVER_SCRIPT
+  # if no Cmd was given, run the default script
+  if [[ $# -eq 0 ]]; then
+    exec "$SERVER_SCRIPT"
   fi
-  test_env SCRIPT_NAME START_SERVER_IN_CONTAINER
-  $START_SERVER_IN_CONTAINER "$@"
+  # otherwise run the script specified by the first Cmd argument
+  case $1 in
+    help)
+      shift
+      exec "$HELP_SCRIPT" "$@"
+    ;;
+    init)
+      shift
+      exec "$INIT_SCRIPT" "$@"
+    ;;
+    server)
+      shift
+      exec "$SERVER_SCRIPT" "$@"
+    ;;
+    *)
+      exec "$@"
+    ;;
+  esac
 }
 
 main "$@"

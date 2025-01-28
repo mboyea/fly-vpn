@@ -67,10 +67,6 @@ stage_env_file_to_fly_secrets() {
 
 deploy_docker_image_to_fly_registry() {
   "$DOCKER_IMAGE_STREAM" | gzip --fast | skopeo --insecure-policy copy --dest-creds="x:$FLY_API_TOKEN" "docker-archive:/dev/stdin" "docker://registry.fly.io/$FLY_APP_NAME:$DOCKER_IMAGE_TAG"
-  # ? podman can perform the required commands to imitate skopeo copy; one may be faster than the other, I don't yet know; my guess is skopeo + gzip does this faster than podman, so I'm using skopeo
-  # podman login -u x -p "$FLY_API_TOKEN" -v registry.fly.io
-  # "$DOCKER_IMAGE_STREAM" | podman load
-  # podman push --format v2s2 "localhost/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG" "docker://registry.fly.io/$FLY_APP_NAME:$DOCKER_IMAGE_TAG"
 }
 
 load_docker_image_on_fly_server() {
@@ -106,9 +102,10 @@ main() {
   test_env SCRIPT_NAME
   test_env ENV_FILE
   load_env_file
-  test_env DOCKER_IMAGE_STREAM DOCKER_IMAGE_NAME DOCKER_IMAGE_TAG FLY_API_TOKEN FLY_APP_NAME FLY_CONFIG
-  interpret_cli_args "$@"
+  test_env DOCKER_IMAGE_STREAM DOCKER_IMAGE_NAME DOCKER_IMAGE_TAG FLY_APP_NAME FLY_API_TOKEN FLY_CONFIG
+  # TODO: interpret_cli_args "$@"
   stage_env_file_to_fly_secrets
+  flyctl secrets set --stage "COMMON_NAME=$FLY_APP_NAME.fly.dev"
   deploy_docker_image_to_fly_registry
   load_docker_image_on_fly_server
 }

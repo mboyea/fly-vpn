@@ -2,7 +2,6 @@
   pkgs,
   name,
   version,
-  server,
   dockerImage,
   envFile ? ".env",
   cliArgs ? [],
@@ -11,60 +10,42 @@
   dockerContainer = pkgs.callPackage ../utils/mk-container.nix {
     inherit name version;
     image = dockerImage;
+    runAsRootUser = true;
     podmanArgs = [
-      "--publish"
-      "5555:5555"
-      "--publish"
-      "992:992"
-      "--publish"
-      "443:443"
-      # TODO --env-file .env (but grep delete '"')
-      "--env"
-      "SOFTETHER_PASS"
-      "--env"
-      "USER_PASS_PAIRS"
+      "--cap-add" "NET_ADMIN" # iptables: can't initialize iptables table `filter': Permission denied
+      "--cap-add" "NET_RAW" # iptables: can't initialize iptables table `filter': Permission denied
+      "--cap-add" "SYSLOG" # dmesg: klogctl: Operation not permitted
+      "--publish" "443:443/tcp"
+      "--publish" "992:992/tcp"
+      "--publish" "5555:5555/tcp"
+      # "--publish" "500:500/udp"
+      # "--publish" "1194:1194/udp"
+      # "--publish" "1701:1701/udp"
+      # "--publish" "4500:4500/udp"
+      # sanitize .env for podman --env-file due to quotes (") not being handled properly
+      # https://github.com/containers/podman-compose/issues/370
+      "--env-file" ''<(sed 's/"\(.*\)"/\1/' "${envFile}")''
+      # get ip of the container host machine to override the common name (cn) of the server
+      "--env" ''"COMMON_NAME=$(ip addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d/ -f1 | head -n 1)"''
+      "--volume" "${dockerImage.name}-${dockerImage.tag}:/var/opt/backup:rw,z"
     ];
-    imageArgs = [
-      "--override-cn"
-      "\"$host_ip\""
+    defaultImageArgs = [
+      "server"
     ];
     preStart = ''
-      # get ip of the container host machine to override the common name (cn) of the server
-      host_ip=$(ip addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d/ -f1 | head -1)
-
-      # TODO: delete all this by implementing above TODO
-      # load the env file if it exists
-      load_env_file() {
-        # if git is not installed, return
-        if ! [ -x "$(command -v git)" ]; then
-          return
-        fi
-        # if current directory is not a git directory, return
-        if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-          return
-        fi
-        # go to top-level of git directory
-        base_dir="$(git rev-parse --show-toplevel)"
-        cd "$base_dir"
-        # load .env file if it exists
-        if [ -r "${envFile}" ]; then
-          set -a
-          # shellcheck disable=SC1091 source=/dev/null
-          source "${envFile}"
-          set +a
-        fi
-      }
-
-      load_env_file
+      flags=$-
+      if [[ $flags =~ e ]]; then set +e; fi
+      if ! podman volume exists "${dockerImage.name}-${dockerImage.tag}" > /dev/null 2>&-; then
+        podman volume create "${dockerImage.name}-${dockerImage.tag}"
+      fi
+      if [[ $flags =~ e ]]; then set -e; fi
     '';
-    runAsRootUser = true;
   };
 in pkgs.writeShellApplication {
   name = _name;
   runtimeEnv = {
     SCRIPT_NAME = _name;
     ADDITIONAL_CLI_ARGS = pkgs.lib.strings.concatStringsSep " " cliArgs;
-    START_SERVER = pkgs.lib.getExe server;
     START_SERVER_IN_CONTAINER = pkgs.lib.getExe dockerContainer;
   };
   text = builtins.readFile ./start.sh;

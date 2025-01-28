@@ -29,6 +29,6 @@ primary_region = 'den'
   cpu_kind = 'shared'
   cpus = 2
 
-# see https://community.fly.io/t/docker-image-works-locally-but-not-on-fly-io-getting-command-not-found/23387
-[env]
-  PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+[mounts]
+  source = "backup"
+  destination = "/var/opt/backup"
