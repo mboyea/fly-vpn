@@ -8,7 +8,26 @@ default_: report
 ---
 ## A SoftEther SSTP VPN Server, hosted by Fly.io
 
-This is a scale-to-zero VPN server that Windows' built-in VPN client can connect to by IP address + username + password.
+### Notice
+
+This project is cancelled because the SoftEther VPN doesn't work within the Fly.io host environment.
+The VPN works correctly when hosted by my laptop; my desktop is able to connect through the vpn when using `nix run .#start`.
+However, when the container is hosted by Fly.io through `nix run .#deploy`, while some connections work, many internet functions fail to work through the VPN.
+Some computers refuse to connect to the deployed Fly.io server at all.
+The container reports the following warnings while running:
+
+```txt
+Warning: Extension connmark revision 0 not supported, missing kernel module?
+iptables: No chain/target/match by that name.
+```
+
+These might imply that the Fly.io server doesn't offer the right privileges to host a VPN in the way Softether does; or, it doesn't have the right kernel support.
+Either way, it's enough to tell me that Softether SSTP is not a match for Fly.io.
+
+This is (supposed to be) a scale-to-zero VPN server that Windows' built-in VPN client can connect to by IP address + username + password.
+It works when hosted in a Podman or Docker container in any general purpose linux server.
+
+**This project is abandoned. If you are looking for a way to play LAN games with your friends, I recommend using [Radmin VPN](https://www.radmin-vpn.com/).**
 
 Questions? [Read the FAQ](#faq).
 
@@ -29,15 +48,15 @@ Now you are ready to configure the server!
 
 #### Configure Server
 
-The VPN server must be configured by a secret file named `.env`. Modify the `.env` file in the root directory of this repository, and declare the following settings:
+The VPN server must be configured by a secret file named `.env`. Create the file named `.env` in the root directory of this repository, and declare the following settings:
 
 `.env`
 
 ```sh
 SOFTETHER_PASS="password"
-USER_PASS_PAIRS="user1:password user2:password user3:password"
-HUB_NAME="flyvpn"
 HUB_PASS="password"
+IPSEC_PSK="notsecret"
+USER_PASS_PAIRS="user1:password user2:password user3:password"
 ```
 
 Now you are ready to deploy the server!
@@ -47,7 +66,6 @@ Now you are ready to deploy the server!
 - [Make a Fly.io account](https://fly.io/dashboard). Link your payment method in the account.
 - Run `nix develop` to open a shell with access to development tools (like `flyctl`).
 - Run `flyctl auth login`
-- Run `touch .env` to make file named `.env`
 - Determine your `<unique_app_name>`.
 - Set `app = '<unique_app_name>'` in `fly.toml`.
 - Add line `FLY_APP_NAME="<unique_app_name>"` to `.env`.
@@ -59,18 +77,20 @@ Now you are ready to deploy the server!
 
 #### Update a Client Certificate (Windows 10)
 
-- Start the server.
-- Find the location of the `.crt` file provided by the server CLI on startup. It is at `/var/lib/softether/vpnserver/cn.txt` by default.
+- Run `nix develop` to open a shell with access to development tools (like `flyctl`).
+- Run `flyctl logs`.
+- Start the server init script.
+- Copy the certificate text from `/usr/vpnserver/store/server.crt` into a file `server.crt`.
 - Download the `.crt` file to the client's Windows 10 computer.
 - Double click the `.crt` file to open it with Crypto Shell Extensions.
 - Click `Install Certificate...`.
 - Select `Local Machine`.
 - Click `Next`.
-- Click `Yes`.
+- Click `Yes` to give administrator privileges.
 - Select `Place all certificates in the following store`.
 - Click `Browse...`.
 - Select `Trusted Root Certification Authorities`.
-- Click `OK` to give Administrator Privileges.
+- Click `OK`.
 - Click `Next`.
 - Click `Finish`.
 
@@ -83,9 +103,10 @@ Now you are ready to deploy the server!
   ![Screenshot of an example VPN connection.](docs/screenshots/windows-10-add-a-vpn-connection.png)
 - Select `Windows (built-in)` under "VPN provider".
 - Name the VPN under "Connection name".
-- Put the common name (CN) of the server under "Server name or address". The common name of your server is given by the server on startup alongside the `.crt` file. It will be either an IP address or a DNS URL.
+- Put the common name (cn) of the server under "Server name or address". The common name of your server is given by the server when the server init script is run alongside the `.crt` file. It will be either an IP address or a DNS URL.
+- Select `Secure Socket Tunneling Protocol (SSTP)` under "VPN type".
 - Write your `<username>` under "User name".
-- Write your `<password>@flyvpn` under "Password".
+- Write your `<password>` under "Password".
 - Click `Save`.
 - Click the VPN connection you just made and select `Connect`.
 
@@ -98,18 +119,15 @@ See [#### Install Server](#install-server).
 |:--- |:--- |
 | `nix run`                   | Alias for `.#help` |
 | `nix run .#help`            | Print this helpful information |
-| `nix run .#start`           | Alias for `.#start native` |
-| `nix run .#start native`    | Start the server natively on your machine |
-| `nix run .#start container` | Start the server in a container on your machine |
-| `nix run .#deploy`          | Alias for `.#deploy all` |
-| `nix run .#deploy server`   | Deploy just the server to Fly.io |
-| `nix run .#deploy secrets`  | Deploy just the secrets to Fly.io |
-| `nix run .#deploy all`      | Deploy the server & secrets to Fly.io |
+| `nix run .#start`           | Start the server in a container on your machine |
+| `nix run .#deploy`          | Deploy the server & secrets to Fly.io |
 | `nix develop`               | Start a dev shell with all project dependencies installed |
 
 ### FAQ
 
 #### What is this for?
+
+**This project is abandoned. If you are looking for a way to play LAN games with your friends, I recommend using [Radmin VPN](https://www.radmin-vpn.com/).**
 
 You can have all your friends connect to this VPN simultaneously.
 When everyone's connected, LAN multiplayer games should allow you to play together.
@@ -154,38 +172,3 @@ We are not currently receiving donations.
 There is no way to fund the project at this time, but if enough interested is generated, a process for donations will be provided.
 
 Feel free to fork, just be sure to [read the license](./LICENSE.md).
-
-### Potential TODO Tasks
-
-1
-
-I should perform a refactor to hide secrets on the production server.
-Right now, those secrets are baked into the Docker image and are exposed in the nix store.
-Rather than baking them into environment variables in the server image, the secrets should be provided by the environment.
-So the `.#start` script should load .env itself, and pass that environment to the running executable.
-
-- For `.#start native`, this is passed directly with Bash.
-- For `.#start container`, this is passed through podman.
-- For `.#deploy`, this is passed through Fly Secrets.
-
-This would enable secrets like USER_PASS_PAIRS to be updated independently of the server image.
-(As it stands, when USER_PASS_PAIRS is updated, all clients must update their certs and that is inconvenient)
-This would also enable me to add `.env` to `.gitignore` again.
-This would also enable me to remove `env.nix`.
-
-2
-
-Add the following.
-
-- echo "  .#deploy | Deploy the server and secrets to Fly.io"
-- echo "  .#deploy server | Deploy the server to Fly.io"
-- echo "  .#deploy secrets | Deploy the secrets to Fly.io"
-
-3
-
-consider generating fly.toml using Nix like https://github.com/LutrisEng/nix-fly-template/blob/main/fly.nix
-this refactor could enable us to pull in FLY_APP_NAME from .env automatically
-
-4
-
-- PRODUCTION_CN should DEFAULT TO $FLY_APP_NAME.fly.dev

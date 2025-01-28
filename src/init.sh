@@ -21,6 +21,29 @@ test_env() {
   if [[ $flags =~ u ]]; then set -u; fi
 }
 
+# load server files from the backup directory
+load_backup_files() {
+  echo "Loading server backup files..."
+  backup_dir="/var/opt/backup"
+  server_dir="$(realpath /opt)"
+  if [[ ! -d "$backup_dir" ]] || [ -z "$( ls -A "$backup_dir" )" ]; then
+    echo "No server backup files to load."
+    return
+  fi
+  cp -rf "$backup_dir/"* "$server_dir"
+  echo "Done loading server backup files..."
+}
+
+# save server files to the backup directory
+save_backup_files() {
+  echo "Backing up server files..."
+  backup_dir="/var/opt/backup"
+  server_dir="$(realpath /opt)"
+  [[ ! -d "$backup_dir" ]] && mkdir -p "$backup_dir"
+  cp -rf "$server_dir/"* "$backup_dir"
+  echo "Done backing up server files."
+}
+
 # start the server and wait for it to come online
 start_server() {
   echo "Starting server..."
@@ -58,7 +81,7 @@ stop_server() {
 # initialize the server config
 configure_settings() {
   echo "Initializing server..."
-  # TODO gracefully handle server password changes
+  # TODO handle server password changes
   # set the server password
   { echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; echo "$SOFTETHER_PASS"; } \
     | vpncmd localhost /SERVER /CMD ServerPasswordSet > /dev/null
@@ -102,6 +125,7 @@ create_users() {
     return
   fi
   # create each user and set their password
+  # TODO handle user password changes
   for user_pass_pair in $USER_PASS_PAIRS; do
     user="${user_pass_pair%%:*}"
     pass="${user_pass_pair#*:}"
@@ -182,6 +206,8 @@ generate_openvpn_config() {
 
 # print the server authentication certificate and SSL private key
 print_cert_and_key() {
+  echo "The server common name (cn) is:"
+  cat "$cn_file"
   echo "Printing certificate from $cert_file:"
   cat "$cert_file"
   echo "Printing key from $key_file:"
@@ -194,6 +220,11 @@ print_openvpn_config() {
   cat "$openvpn_config_file"
 }
 
+# called when the script exits
+on_exit() {
+  stop_server
+}
+
 # entrypoint of this script
 main() {
   test_env SCRIPT_NAME SOFTETHER_PASS HUB_PASS IPSEC_PSK COMMON_NAME
@@ -201,7 +232,8 @@ main() {
   : "${NAT_TCP_TIMEOUT:="3600"}"
   : "${NAT_UDP_TIMEOUT:="1800"}"
   : "${USER_PASS_PAIRS:=""}"
-  trap stop_server EXIT
+  load_backup_files
+  trap on_exit EXIT
   start_server
   configure_settings
   create_users
@@ -209,6 +241,7 @@ main() {
   # generate_openvpn_config
   # print_openvpn_config
   print_cert_and_key
+  save_backup_files
 }
 
 main "$@"

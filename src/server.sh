@@ -40,7 +40,10 @@ load_backup_files() {
   echo "Loading server backup files..."
   backup_dir="/var/opt/backup"
   server_dir="$(realpath /opt)"
-  [[ ! -d "$backup_dir" ]] && return
+  if [[ ! -d "$backup_dir" ]] || [ -z "$( ls -A "$backup_dir" )" ]; then
+    echo "No server backup files to load."
+    return
+  fi
   cp -rf "$backup_dir/"* "$server_dir"
   echo "Done loading server backup files..."
 }
@@ -105,7 +108,6 @@ main() {
   load_backup_files
   test_capabilities
   init_server
-  save_backup_files
   trap on_exit EXIT
   start_server
 }

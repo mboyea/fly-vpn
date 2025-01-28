@@ -11,20 +11,21 @@ default_: report
 ## Goals
 
 - +1.2.0 | Remote Config Script
-- +1.1.0 | Deploy Script
+- +1.1.0 | Initial Deploy Script
 - +1.0.0 | Working VPN + Tested LAN Gaming + Manual Deploy + Manual Config
 
 ## Milestones
 
-- [ ] (E) Announce release for +1.0.0 @docs
+- [ ] (A) Announce release for +1.0.0 @docs
 - [ ] (B) Document how to play each game in `README.md` @docs
-- [ ] (D) Verify LAN gaming works with Fly.io for Castle Crusaders @test
-- [ ] (D) Verify LAN gaming works with Fly.io for Age of Empires @test
+- [ ] (D) Verify LAN gaming works with Fly.io for Age of Empires II @test
 - [ ] (C) Verify LAN gaming works with Fly.io for Diablo II @test
 - [ ] (C) Verify LAN gaming works with Fly.io for Minecraft @test
 - [ ] (B) Re-write `README.md` and `nix run .#help` to reflect new usage @docs @code
+- [ ] (E) Generate fly.toml using Nix like at https://github.com/LutrisEng/nix-fly-template/blob/main/fly.nix @code
 - [ ] (A) Draft `nix run .#deploy` scripts `server`, `secrets`, and `all` @code
 - [ ] (A) Verify VPN works with Fly.io using Windows VPN client @test
+- [x] (B) 2025-01-28 Re-write `README.md` and `nix run .#help` to reflect new usage @docs @code
 - [x] (A) 2025-01-24 Setup volumes to persist the server configuration @code
 - [x] (A) 2025-01-23 Fix `nix run .#deploy`for new image @code
 - [x] (A) 2025-01-23 Verify VPN works with `nix run .#start` using Windows VPN client @test
