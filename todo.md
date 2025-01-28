@@ -17,6 +17,7 @@ default_: report
 ## Milestones
 
 - [ ] (A) Announce release for +1.0.0 @docs
+- [ ] (C) Make server backup its files every 10 minutes by default @code
 - [ ] (B) Document how to play each game in `README.md` @docs
 - [ ] (D) Verify LAN gaming works with Fly.io for Age of Empires II @test
 - [ ] (C) Verify LAN gaming works with Fly.io for Diablo II @test
